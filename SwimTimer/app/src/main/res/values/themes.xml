@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Default / Light = Piscina Giorno -->
+    <style name="Theme.SwimTimer" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <item name="colorPrimary">@color/pool_surface</item>
+        <item name="colorPrimaryVariant">@color/pool_deep</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/lane_rope</item>
+        <item name="android:colorBackground">@color/pool_mid</item>
+        <item name="colorSurface">@color/pool_deep</item>
+        <item name="android:statusBarColor">@color/pool_deep</item>
+        <item name="android:windowBackground">@color/pool_deep</item>
+    </style>
+
+    <!-- Dark = Piscina Notte -->
+    <style name="Theme.SwimTimer.Dark" parent="Theme.MaterialComponents.DarkActionBar">
+        <item name="colorPrimary">@color/pool_sparkle</item>
+        <item name="colorPrimaryVariant">@color/dark_pool</item>
+        <item name="colorOnPrimary">@color/dark_pool</item>
+        <item name="colorSecondary">@color/lane_rope</item>
+        <item name="android:colorBackground">@color/dark_pool</item>
+        <item name="colorSurface">@color/dark_surface</item>
+        <item name="android:statusBarColor">@color/dark_pool</item>
+        <item name="android:windowBackground">@color/dark_pool</item>
+    </style>
+
+    <!-- Multicolor = Notturna Viola -->
+    <style name="Theme.SwimTimer.Multi" parent="Theme.MaterialComponents.Light.DarkActionBar">
+        <item name="colorPrimary">@color/mc_wave2</item>
+        <item name="colorPrimaryVariant">@color/mc_pool</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/gold</item>
+        <item name="android:colorBackground">@color/mc_pool</item>
+        <item name="colorSurface">@color/mc_pool</item>
+        <item name="android:statusBarColor">@color/mc_pool</item>
+        <item name="android:windowBackground">@color/mc_pool</item>
+    </style>
+
+</resources>

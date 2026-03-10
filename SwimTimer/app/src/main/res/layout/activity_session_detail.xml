@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/pool_mid">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent" android:layout_height="?attr/actionBarSize"
+            android:background="@color/pool_deep" app:titleTextColor="@android:color/white"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView android:layout_width="match_parent" android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="16dp">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="16dp" app:cardElevation="4dp"
+                app:cardBackgroundColor="@color/card_translucent">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="vertical" android:padding="20dp">
+
+                    <TextView android:id="@+id/tvName" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:textSize="22sp"
+                        android:textStyle="bold" android:textColor="@android:color/white"
+                        android:layout_marginBottom="4dp"/>
+
+                    <TextView android:id="@+id/tvDate" android:layout_width="match_parent"
+                        android:layout_height="wrap_content" android:textSize="13sp"
+                        android:textColor="#88E0F0" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:gravity="center_vertical">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="⏱ " android:textSize="16sp"/>
+                        <TextView android:id="@+id/tvTotal" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textSize="26sp"
+                            android:fontFamily="monospace" android:textStyle="bold"
+                            android:textColor="#FFD600"/>
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnRename"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp" android:text="@string/rename"
+                        app:backgroundTint="@color/pool_surface"
+                        app:icon="@drawable/ic_edit"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="@string/laps_header" android:textSize="14sp"
+                android:textStyle="bold" android:textColor="#88E0F0"
+                android:textAllCaps="true" android:letterSpacing="0.1"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView android:id="@+id/tvNoLaps" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/no_laps"
+                android:textSize="14sp" android:gravity="center" android:textColor="#88E0F0"
+                android:padding="24dp" android:visibility="gone"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvLaps" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:nestedScrollingEnabled="false"/>
+
+        </LinearLayout>
+    </ScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
