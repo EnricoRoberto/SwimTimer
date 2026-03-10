@@ -28,7 +28,7 @@ jobs:
       - name: Installa Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.1.1'
+          gradle-version: '8.7'
 
       - name: Crea local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
