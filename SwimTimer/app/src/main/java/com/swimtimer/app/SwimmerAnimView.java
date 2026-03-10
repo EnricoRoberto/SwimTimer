@@ -13,6 +13,7 @@ public class SwimmerAnimView extends View {
     private Paint bodyPaint, capPaint, armPaint;
     private float rockAngle = 0f;
     private ValueAnimator rockAnimator;
+    private boolean isRunning = false;
 
     public SwimmerAnimView(Context context) { super(context); init(); }
     public SwimmerAnimView(Context context, AttributeSet a) { super(context, a); init(); }
@@ -31,12 +32,15 @@ public class SwimmerAnimView extends View {
         armPaint.setStrokeWidth(5f);
         armPaint.setStrokeCap(Paint.Cap.ROUND);
         armPaint.setStyle(Paint.Style.STROKE);
+    }
 
+    private void buildAnimator() {
         rockAnimator = ValueAnimator.ofFloat(-12f, 12f);
         rockAnimator.setDuration(600);
         rockAnimator.setRepeatCount(ValueAnimator.INFINITE);
         rockAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        rockAnimator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        rockAnimator.setInterpolator(
+            new android.view.animation.AccelerateDecelerateInterpolator());
         rockAnimator.addUpdateListener(anim -> {
             rockAngle = (float) anim.getAnimatedValue();
             invalidate();
@@ -44,10 +48,15 @@ public class SwimmerAnimView extends View {
     }
 
     public void setRunning(boolean running) {
+        this.isRunning = running;
         if (running) {
+            if (rockAnimator == null) buildAnimator();
             if (!rockAnimator.isRunning()) rockAnimator.start();
         } else {
-            rockAnimator.pause();
+            if (rockAnimator != null && rockAnimator.isRunning()) {
+                rockAnimator.cancel();
+                rockAnimator = null;
+            }
             rockAngle = 0f;
             invalidate();
         }
@@ -56,6 +65,8 @@ public class SwimmerAnimView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if (getWidth() == 0 || getHeight() == 0) return;
+
         float cx = getWidth() / 2f;
         float cy = getHeight() / 2f;
 
@@ -80,6 +91,9 @@ public class SwimmerAnimView extends View {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        if (rockAnimator != null) rockAnimator.cancel();
+        if (rockAnimator != null) {
+            rockAnimator.cancel();
+            rockAnimator = null;
+        }
     }
 }
