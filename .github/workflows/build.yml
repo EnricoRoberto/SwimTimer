@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew assembleDebug
 
       - name: Salva APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: SwimTimer-APK
           path: app/build/outputs/apk/debug/app-debug.apk
