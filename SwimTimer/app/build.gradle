@@ -1,12 +1,12 @@
 plugins { id 'com.android.application' }
 
 android {
-    compileSdk 33
+    compileSdk 36
     namespace 'com.swimtimer.app'
     defaultConfig {
         applicationId "com.swimtimer.app"
         minSdk 29
-        targetSdk 33
+        targetSdk 36
         versionCode 1
         versionName "1.0"
     }
