@@ -86,32 +86,49 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
-                        android:layout_marginTop="12dp">
+                        android:layout_marginTop="12dp"
+                        android:baselineAligned="false">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnRename"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="52dp"
                             android:layout_weight="1"
-                            android:layout_marginEnd="8dp"
+                            android:layout_marginEnd="6dp"
                             android:text="@string/rename"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
                             android:textColor="@android:color/white"
+                            android:autoSizeTextType="uniform"
+                            android:autoSizeMinTextSize="10sp"
+                            android:autoSizeMaxTextSize="13sp"
                             app:backgroundTint="@color/pool_surface"
                             app:icon="@drawable/ic_edit"
                             app:iconTint="@android:color/white"
-                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                            app:iconSize="18dp"
+                            app:iconGravity="textStart"
+                            app:cornerRadius="26dp"
+                            style="@style/Widget.MaterialComponents.Button"/>
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnShare"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="52dp"
                             android:layout_weight="1"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:text="@string/share"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
                             android:textColor="@android:color/white"
+                            android:autoSizeTextType="uniform"
+                            android:autoSizeMinTextSize="10sp"
+                            android:autoSizeMaxTextSize="13sp"
                             app:backgroundTint="@color/btn_start"
                             app:icon="@drawable/ic_share"
                             app:iconTint="@android:color/white"
+                            app:iconSize="18dp"
+                            app:iconGravity="textStart"
+                            app:cornerRadius="26dp"
                             style="@style/Widget.MaterialComponents.Button"/>
 
                     </LinearLayout>
