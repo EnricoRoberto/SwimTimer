@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<string name="share">Condividi</string>
-<string name="share_via">Condividi tramite</string>
 <resources>
     <string name="app_name">🏊 SwimTimer</string>
     <string name="start">Start</string>
@@ -33,4 +31,6 @@
     <string name="delete_confirm">Eliminare la gara \'%s\'?</string>
     <string name="lap_n">Vasca %d</string>
     <string name="lap_count">%d vasche</string>
+    <string name="share">Condividi</string>
+    <string name="share_via">Condividi tramite</string>
 </resources>
