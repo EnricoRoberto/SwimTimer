@@ -104,13 +104,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void onResetPressed() {
         if (isRunning) {
-            new MaterialAlertDialogBuilder(this)
-                    .setTitle(R.string.confirm_reset)
-                    .setMessage(R.string.confirm_reset_msg)
-                    .setPositiveButton(R.string.yes, (d, w) -> { vibrate(); stopAndAskSave(); })
-                    .setNegativeButton(R.string.no, null).show();
+            // Ferma il cronometro
+            elapsedTime += System.currentTimeMillis() - startTime;
+            isRunning = false;
+            handler.removeCallbacks(timerRunnable);
+            binding.swimmerView.setRunning(false);
+            binding.waveView.setRunning(false);
+            updateUI();
+            // Chiede se salvare
+            showSaveDialog();
         } else if (elapsedTime > 0) {
-            stopAndAskSave();
+            // Era già fermo, chiede se salvare
+            showSaveDialog();
         }
     }
 
@@ -120,6 +125,8 @@ public class MainActivity extends AppCompatActivity {
             isRunning = false;
             handler.removeCallbacks(timerRunnable);
             binding.swimmerView.setRunning(false);
+            binding.waveView.setRunning(false);
+            updateUI();
         }
         showSaveDialog();
     }
