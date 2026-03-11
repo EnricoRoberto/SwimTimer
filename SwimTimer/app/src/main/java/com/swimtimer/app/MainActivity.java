@@ -184,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void vibrate() {
         if (vibrator != null && vibrator.hasVibrator())
-            vibrator.vibrate(VibrationEffect.createOneShot(50,
+            vibrator.vibrate(VibrationEffect.createOneShot(150,
                     VibrationEffect.DEFAULT_AMPLITUDE));
     }
 
