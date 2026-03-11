@@ -156,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
         binding.tvTime.setText("00:00.00");
         binding.tvCurrentLap.setText(getString(R.string.current_lap) + " 00:00.00");
         binding.swimmerView.setRunning(false);
+        binding.waveView.setRunning(false);
         updateUI();
     }
 
