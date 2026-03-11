@@ -74,18 +74,24 @@
 
                 <TextView
                     android:id="@+id/tvTime"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="00:00.00"
                     android:textSize="60sp"
                     android:fontFamily="monospace"
                     android:textStyle="bold"
                     android:textColor="@android:color/white"
+                    android:gravity="center"
+                    android:maxLines="1"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="24sp"
+                    android:autoSizeMaxTextSize="60sp"
+                    android:autoSizeStepGranularity="2sp"
                     android:shadowColor="#40000000"
                     android:shadowDx="2"
                     android:shadowDy="2"
                     android:shadowRadius="4"
-                    android:letterSpacing="0.05"/>
+                    android:letterSpacing="0.05"/>                    
 
                 <View
                     android:layout_width="match_parent"
