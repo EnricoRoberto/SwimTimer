@@ -91,7 +91,7 @@
                     android:shadowDx="2"
                     android:shadowDy="2"
                     android:shadowRadius="4"
-                    android:letterSpacing="0.05"/>                    
+                    android:letterSpacing="0.05"/>                 
 
                 <View
                     android:layout_width="match_parent"
