@@ -102,7 +102,6 @@ public class SessionDetailActivity extends AppCompatActivity {
     }
 
     private void shareSession() {
-        // Costruisci il testo
         StringBuilder sb = new StringBuilder();
         sb.append("🏊 ").append(session.getName()).append("\n");
         sb.append("📅 ").append(DateFormat.getDateTimeInstance()
@@ -131,38 +130,20 @@ public class SessionDetailActivity extends AppCompatActivity {
         boolean hasPhoto = photoPath != null && !photoPath.isEmpty()
                 && new File(photoPath).exists();
 
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.putExtra(Intent.EXTRA_TEXT, sb.toString());
+
         if (hasPhoto) {
-            // Condividi testo + foto
             Uri photoUri = FileProvider.getUriForFile(this,
                     "com.swimtimer.app.fileprovider", new File(photoPath));
-
-            Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("image/jpeg");
-            intent.putExtra(Intent.EXTRA_TEXT, sb.toString());
             intent.putExtra(Intent.EXTRA_STREAM, photoUri);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            // Prova WhatsApp prima
-            intent.setPackage("com.whatsapp");
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            } else {
-                intent.setPackage(null);
-                startActivity(Intent.createChooser(intent, getString(R.string.share_via)));
-            }
         } else {
-            // Solo testo
-            Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/plain");
-            intent.putExtra(Intent.EXTRA_TEXT, sb.toString());
-            intent.setPackage("com.whatsapp");
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-            } else {
-                intent.setPackage(null);
-                startActivity(Intent.createChooser(intent, getString(R.string.share_via)));
-            }
         }
+
+        startActivity(Intent.createChooser(intent, getString(R.string.share_via)));
     }
 
     @Override
