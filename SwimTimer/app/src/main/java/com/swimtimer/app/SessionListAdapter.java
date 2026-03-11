@@ -1,7 +1,6 @@
 package com.swimtimer.app;
 
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +14,7 @@ import java.util.Date;
 import java.util.List;
 
 public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.VH> {
-    private final List<SessionData> sessions;
+    private List<SessionData> sessions;
     private final OnSessionClickListener listener;
 
     public interface OnSessionClickListener {
@@ -23,7 +22,13 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
     }
 
     public SessionListAdapter(List<SessionData> sessions, OnSessionClickListener l) {
-        this.sessions = sessions; this.listener = l;
+        this.sessions = sessions;
+        this.listener = l;
+    }
+
+    public void updateSessions(List<SessionData> newSessions) {
+        this.sessions = newSessions;
+        notifyDataSetChanged();
     }
 
     @NonNull @Override
