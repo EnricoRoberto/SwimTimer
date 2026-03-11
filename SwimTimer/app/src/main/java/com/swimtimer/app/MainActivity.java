@@ -1,26 +1,42 @@
 package com.swimtimer.app;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.swimtimer.app.databinding.ActivityMainBinding;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -32,6 +48,36 @@ public class MainActivity extends AppCompatActivity {
     private Vibrator vibrator;
     private ThemeManager themeManager;
     private LapAdapter lapAdapter;
+
+    // Foto
+    private String currentPhotoPath = null;
+    private Uri photoUri = null;
+    private ImageView dialogPhotoPreview = null;
+    private TextView dialogPhotoLabel = null;
+
+    private final ActivityResultLauncher<Uri> takePictureLauncher =
+            registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
+                if (success && currentPhotoPath != null) {
+                    // Mostra anteprima nel dialog
+                    if (dialogPhotoPreview != null) {
+                        dialogPhotoPreview.setVisibility(View.VISIBLE);
+                        dialogPhotoPreview.setImageURI(Uri.fromFile(new File(currentPhotoPath)));
+                    }
+                    if (dialogPhotoLabel != null) {
+                        dialogPhotoLabel.setText("✅ Foto scattata!");
+                        dialogPhotoLabel.setTextColor(Color.parseColor("#4CAF50"));
+                    }
+                } else {
+                    currentPhotoPath = null;
+                }
+            });
+
+    private final ActivityResultLauncher<String> requestCameraPermission =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) launchCamera();
+                else Toast.makeText(this,
+                        "Permesso fotocamera negato", Toast.LENGTH_SHORT).show();
+            });
 
     private final Runnable timerRunnable = new Runnable() {
         @Override public void run() {
@@ -65,18 +111,15 @@ public class MainActivity extends AppCompatActivity {
             lapAdapter = new LapAdapter(laps);
             binding.rvLaps.setLayoutManager(new LinearLayoutManager(this));
             binding.rvLaps.setAdapter(lapAdapter);
-
             binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
             binding.btnLap.setOnClickListener(v -> { if (isRunning) { vibrate(); recordLap(); }});
             binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
-
             updateUI();
         } catch (Exception e) {
             new AlertDialog.Builder(this)
-                    .setTitle("Errore onCreate - copialo!")
+                    .setTitle("Errore onCreate")
                     .setMessage(e.toString())
-                    .setPositiveButton("OK", null)
-                    .show();
+                    .setPositiveButton("OK", null).show();
         }
     }
 
@@ -106,7 +149,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onResetPressed() {
-        // Se sta girando, fermalo prima
         if (isRunning) {
             elapsedTime += System.currentTimeMillis() - startTime;
             isRunning = false;
@@ -115,19 +157,31 @@ public class MainActivity extends AppCompatActivity {
             binding.waveView.setRunning(false);
             updateUI();
         }
-        // Mostra dialog solo se c'è qualcosa da salvare
         if (elapsedTime > 0) {
+            currentPhotoPath = null;
             showSaveDialog();
         } else {
             resetAll();
         }
     }
 
-   private void showSaveDialog() {
+    private void showSaveDialog() {
         try {
             View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
             com.google.android.material.textfield.TextInputEditText et =
                     dv.findViewById(R.id.etSessionName);
+            MaterialButton btnPhoto = dv.findViewById(R.id.btnTakePhoto);
+            dialogPhotoPreview = dv.findViewById(R.id.ivPhotoPreview);
+            dialogPhotoLabel = dv.findViewById(R.id.tvPhotoLabel);
+
+            btnPhoto.setOnClickListener(v -> {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
+                    launchCamera();
+                } else {
+                    requestCameraPermission.launch(Manifest.permission.CAMERA);
+                }
+            });
 
             AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle("Salva Gara")
@@ -142,43 +196,68 @@ public class MainActivity extends AppCompatActivity {
                         }
                         List<Long> savedLaps = new ArrayList<>(laps);
                         Collections.reverse(savedLaps);
-                        SessionStorage.saveSession(this,
-                                new SessionData(name, System.currentTimeMillis(),
-                                        elapsedTime, savedLaps));
+                        SessionData session = new SessionData(name,
+                                System.currentTimeMillis(), elapsedTime, savedLaps);
+                        if (currentPhotoPath != null) {
+                            session.setPhotoPath(currentPhotoPath);
+                        }
+                        SessionStorage.saveSession(this, session);
                         Toast.makeText(this, R.string.session_saved,
                                 Toast.LENGTH_SHORT).show();
                         resetAll();
                     })
-                    .setNegativeButton(R.string.discard, (d, w) -> resetAll())
+                    .setNegativeButton(R.string.discard, (d, w) -> {
+                        currentPhotoPath = null;
+                        resetAll();
+                    })
                     .setNeutralButton(R.string.cancel, null)
                     .create();
 
             dialog.show();
-
-            // Forza testo scuro sui pulsanti del dialog
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                     .setTextColor(Color.parseColor("#1565C0"));
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
                     .setTextColor(Color.parseColor("#F44336"));
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
                     .setTextColor(Color.parseColor("#757575"));
-
-            // Sfondo bianco del dialog
             if (dialog.getWindow() != null) {
                 dialog.getWindow().setBackgroundDrawable(
                         new android.graphics.drawable.ColorDrawable(Color.WHITE));
             }
 
         } catch (Exception e) {
-            android.util.Log.e("SWIMCRASH", "showSaveDialog crash: " + e);
+            android.util.Log.e("SWIMCRASH", "showSaveDialog: " + e);
             resetAll();
         }
     }
 
+    private void launchCamera() {
+        try {
+            File photoFile = createImageFile();
+            photoUri = FileProvider.getUriForFile(this,
+                    "com.swimtimer.app.fileprovider", photoFile);
+            takePictureLauncher.launch(photoUri);
+        } catch (IOException e) {
+            Toast.makeText(this, "Errore fotocamera", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private File createImageFile() throws IOException {
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                .format(new Date());
+        String imageFileName = "SWIM_" + timeStamp;
+        File storageDir = new File(getFilesDir(), "photos");
+        if (!storageDir.exists()) storageDir.mkdirs();
+        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+        currentPhotoPath = image.getAbsolutePath();
+        return image;
+    }
+
     private void resetAll() {
-        elapsedTime = 0;
-        lastLapTime = 0;
-        isRunning = false;
+        elapsedTime = 0; lastLapTime = 0; isRunning = false;
+        currentPhotoPath = null;
+        dialogPhotoPreview = null;
+        dialogPhotoLabel = null;
         handler.removeCallbacks(timerRunnable);
         laps.clear();
         lapAdapter.notifyDataSetChanged();
