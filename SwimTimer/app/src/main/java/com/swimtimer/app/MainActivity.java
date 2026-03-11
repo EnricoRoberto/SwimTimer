@@ -123,13 +123,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void showSaveDialog() {
+   private void showSaveDialog() {
         try {
             View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
             com.google.android.material.textfield.TextInputEditText et =
                     dv.findViewById(R.id.etSessionName);
 
-            new AlertDialog.Builder(this)
+            AlertDialog dialog = new AlertDialog.Builder(this)
                     .setTitle("Salva Gara")
                     .setView(dv)
                     .setPositiveButton(R.string.save, (d, w) -> {
@@ -151,7 +151,24 @@ public class MainActivity extends AppCompatActivity {
                     })
                     .setNegativeButton(R.string.discard, (d, w) -> resetAll())
                     .setNeutralButton(R.string.cancel, null)
-                    .show();
+                    .create();
+
+            dialog.show();
+
+            // Forza testo scuro sui pulsanti del dialog
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+                    .setTextColor(Color.parseColor("#1565C0"));
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+                    .setTextColor(Color.parseColor("#F44336"));
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+                    .setTextColor(Color.parseColor("#757575"));
+
+            // Sfondo bianco del dialog
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(Color.WHITE));
+            }
+
         } catch (Exception e) {
             android.util.Log.e("SWIMCRASH", "showSaveDialog crash: " + e);
             resetAll();
