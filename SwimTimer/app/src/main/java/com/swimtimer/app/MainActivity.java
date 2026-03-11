@@ -124,13 +124,18 @@ public class MainActivity extends AppCompatActivity {
         showSaveDialog();
     }
 
-    private void showSaveDialog() {
+private void showSaveDialog() {
         View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
         com.google.android.material.textfield.TextInputEditText et =
                 dv.findViewById(R.id.etSessionName);
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.save_session)
+
+        // Forza tema chiaro per il dialog — leggibile su tutti i temi
+        new MaterialAlertDialogBuilder(this,
+                com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
+                .setTitle("💾 Salva Gara")
                 .setView(dv)
+                .setBackground(new android.graphics.drawable.ColorDrawable(
+                        android.graphics.Color.parseColor("#FFFFFF")))
                 .setPositiveButton(R.string.save, (d, w) -> {
                     String name = et.getText() != null ?
                             et.getText().toString().trim() : "";
@@ -146,7 +151,8 @@ public class MainActivity extends AppCompatActivity {
                     resetAll();
                 })
                 .setNegativeButton(R.string.discard, (d, w) -> resetAll())
-                .setNeutralButton(R.string.cancel, null).show();
+                .setNeutralButton(R.string.cancel, null)
+                .show();
     }
 
     private void resetAll() {
