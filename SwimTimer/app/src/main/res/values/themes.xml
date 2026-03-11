@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <style name="ToolbarTitle" parent="@style/TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
     <style name="Theme.SwimTimer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/pool_surface</item>
         <item name="colorPrimaryVariant">@color/pool_deep</item>
@@ -10,6 +15,8 @@
         <item name="colorSurface">@color/pool_deep</item>
         <item name="android:statusBarColor">@color/pool_deep</item>
         <item name="android:windowBackground">@color/pool_deep</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">#BBE0F0</item>
     </style>
 
     <style name="Theme.SwimTimer.Dark" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -21,6 +28,8 @@
         <item name="colorSurface">@color/dark_surface</item>
         <item name="android:statusBarColor">@color/dark_pool</item>
         <item name="android:windowBackground">@color/dark_pool</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">#90CAF9</item>
     </style>
 
     <style name="Theme.SwimTimer.Multi" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -32,6 +41,8 @@
         <item name="colorSurface">@color/mc_pool</item>
         <item name="android:statusBarColor">@color/mc_pool</item>
         <item name="android:windowBackground">@color/mc_pool</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
+        <item name="android:textColorSecondary">#CE93D8</item>
     </style>
 
 </resources>
