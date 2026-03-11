@@ -49,9 +49,12 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
+                        <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnRename"
-                        android:layout_width="wrap_content" android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp" android:text="@string/rename"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/rename"
                         app:backgroundTint="@color/pool_surface"
                         app:icon="@drawable/ic_edit"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
