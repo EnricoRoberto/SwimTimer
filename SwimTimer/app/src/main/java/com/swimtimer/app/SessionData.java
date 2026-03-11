@@ -2,12 +2,13 @@ package com.swimtimer.app;
 import java.util.List;
 
 public class SessionData {
-    private String name, id;
+    private String name, id, photoPath;
     private long date, totalTime;
     private List<Long> laps;
 
     public SessionData(String name, long date, long totalTime, List<Long> laps) {
-        this.name = name; this.date = date; this.totalTime = totalTime; this.laps = laps;
+        this.name = name; this.date = date;
+        this.totalTime = totalTime; this.laps = laps;
         this.id = String.valueOf(date);
     }
 
@@ -16,5 +17,7 @@ public class SessionData {
     public long getDate() { return date; }
     public long getTotalTime() { return totalTime; }
     public List<Long> getLaps() { return laps; }
+    public String getPhotoPath() { return photoPath; }
     public void setName(String n) { name = n; }
+    public void setPhotoPath(String p) { photoPath = p; }
 }
