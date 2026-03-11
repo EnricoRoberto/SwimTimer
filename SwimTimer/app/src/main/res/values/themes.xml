@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.SwimTimer" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.SwimTimer" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/pool_surface</item>
         <item name="colorPrimaryVariant">@color/pool_deep</item>
         <item name="colorOnPrimary">@android:color/white</item>
@@ -12,7 +12,7 @@
         <item name="android:windowBackground">@color/pool_deep</item>
     </style>
 
-    <style name="Theme.SwimTimer.Dark" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.SwimTimer.Dark" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/pool_sparkle</item>
         <item name="colorPrimaryVariant">@color/dark_pool</item>
         <item name="colorOnPrimary">@color/dark_pool</item>
@@ -23,7 +23,7 @@
         <item name="android:windowBackground">@color/dark_pool</item>
     </style>
 
-    <style name="Theme.SwimTimer.Multi" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+    <style name="Theme.SwimTimer.Multi" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">@color/mc_wave2</item>
         <item name="colorPrimaryVariant">@color/mc_pool</item>
         <item name="colorOnPrimary">@android:color/white</item>
