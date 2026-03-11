@@ -21,11 +21,13 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
+            android:layout_height="64dp"
             android:background="@android:color/transparent"
-            app:title="@string/app_name"
+            android:contentInsetStart="16dp"
+            app:contentInsetStart="16dp"
             app:titleTextColor="@android:color/white"
-            app:subtitleTextColor="@android:color/white"/>
+            app:titleTextAppearance="@style/ToolbarTitle"
+            app:title="@string/app_name"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
