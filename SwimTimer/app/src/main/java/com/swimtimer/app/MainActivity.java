@@ -1,6 +1,7 @@
 package com.swimtimer.app;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.VibrationEffect;
@@ -64,9 +65,11 @@ public class MainActivity extends AppCompatActivity {
             lapAdapter = new LapAdapter(laps);
             binding.rvLaps.setLayoutManager(new LinearLayoutManager(this));
             binding.rvLaps.setAdapter(lapAdapter);
+
             binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
             binding.btnLap.setOnClickListener(v -> { if (isRunning) { vibrate(); recordLap(); }});
             binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
+
             updateUI();
         } catch (Exception e) {
             new AlertDialog.Builder(this)
@@ -103,23 +106,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void onResetPressed() {
-        if (isRunning) {
-            // Ferma il cronometro
-            elapsedTime += System.currentTimeMillis() - startTime;
-            isRunning = false;
-            handler.removeCallbacks(timerRunnable);
-            binding.swimmerView.setRunning(false);
-            binding.waveView.setRunning(false);
-            updateUI();
-            // Chiede se salvare
-            showSaveDialog();
-        } else if (elapsedTime > 0) {
-            // Era già fermo, chiede se salvare
-            showSaveDialog();
-        }
-    }
-
-    private void stopAndAskSave() {
+        // Se sta girando, fermalo prima
         if (isRunning) {
             elapsedTime += System.currentTimeMillis() - startTime;
             isRunning = false;
@@ -128,42 +115,54 @@ public class MainActivity extends AppCompatActivity {
             binding.waveView.setRunning(false);
             updateUI();
         }
-        showSaveDialog();
+        // Mostra dialog solo se c'è qualcosa da salvare
+        if (elapsedTime > 0) {
+            showSaveDialog();
+        } else {
+            resetAll();
+        }
     }
 
-private void showSaveDialog() {
-        View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
-        com.google.android.material.textfield.TextInputEditText et =
-                dv.findViewById(R.id.etSessionName);
+    private void showSaveDialog() {
+        try {
+            View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
+            com.google.android.material.textfield.TextInputEditText et =
+                    dv.findViewById(R.id.etSessionName);
 
-        // Forza tema chiaro per il dialog — leggibile su tutti i temi
-        new MaterialAlertDialogBuilder(this,
-                com.google.android.material.R.style.ThemeOverlay_Material3_MaterialAlertDialog_Centered)
-                .setTitle("💾 Salva Gara")
-                .setView(dv)
-                .setBackground(new android.graphics.drawable.ColorDrawable(
-                        android.graphics.Color.parseColor("#FFFFFF")))
-                .setPositiveButton(R.string.save, (d, w) -> {
-                    String name = et.getText() != null ?
-                            et.getText().toString().trim() : "";
-                    if (name.isEmpty()) name = getString(R.string.default_session_name)
-                            + " " + java.text.DateFormat.getDateTimeInstance()
-                            .format(new java.util.Date());
-                    List<Long> savedLaps = new ArrayList<>(laps);
-                    Collections.reverse(savedLaps);
-                    SessionStorage.saveSession(this,
-                            new SessionData(name, System.currentTimeMillis(),
-                                    elapsedTime, savedLaps));
-                    Toast.makeText(this, R.string.session_saved, Toast.LENGTH_SHORT).show();
-                    resetAll();
-                })
-                .setNegativeButton(R.string.discard, (d, w) -> resetAll())
-                .setNeutralButton(R.string.cancel, null)
-                .show();
+            new AlertDialog.Builder(this)
+                    .setTitle("Salva Gara")
+                    .setView(dv)
+                    .setPositiveButton(R.string.save, (d, w) -> {
+                        String name = et.getText() != null ?
+                                et.getText().toString().trim() : "";
+                        if (name.isEmpty()) {
+                            name = getString(R.string.default_session_name)
+                                    + " " + java.text.DateFormat.getDateTimeInstance()
+                                    .format(new java.util.Date());
+                        }
+                        List<Long> savedLaps = new ArrayList<>(laps);
+                        Collections.reverse(savedLaps);
+                        SessionStorage.saveSession(this,
+                                new SessionData(name, System.currentTimeMillis(),
+                                        elapsedTime, savedLaps));
+                        Toast.makeText(this, R.string.session_saved,
+                                Toast.LENGTH_SHORT).show();
+                        resetAll();
+                    })
+                    .setNegativeButton(R.string.discard, (d, w) -> resetAll())
+                    .setNeutralButton(R.string.cancel, null)
+                    .show();
+        } catch (Exception e) {
+            android.util.Log.e("SWIMCRASH", "showSaveDialog crash: " + e);
+            resetAll();
+        }
     }
 
     private void resetAll() {
-        elapsedTime = 0; lastLapTime = 0; isRunning = false;
+        elapsedTime = 0;
+        lastLapTime = 0;
+        isRunning = false;
+        handler.removeCallbacks(timerRunnable);
         laps.clear();
         lapAdapter.notifyDataSetChanged();
         binding.tvTime.setText("00:00.00");
