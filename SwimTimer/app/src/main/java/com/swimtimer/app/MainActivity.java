@@ -83,11 +83,13 @@ public class MainActivity extends AppCompatActivity {
             isRunning = false;
             handler.removeCallbacks(timerRunnable);
             binding.swimmerView.setRunning(false);
+            binding.waveView.setRunning(false);
         } else {
             startTime = System.currentTimeMillis();
             isRunning = true;
             handler.post(timerRunnable);
             binding.swimmerView.setRunning(true);
+            binding.waveView.setRunning(true);
         }
         updateUI();
     }
