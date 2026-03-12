@@ -41,12 +41,29 @@ public class HistoryActivity extends AppCompatActivity {
         } else {
             binding.tvEmpty.setVisibility(View.GONE);
             binding.rvSessions.setVisibility(View.VISIBLE);
-            if (adapter == null) {
-                adapter = new SessionListAdapter(sessions, session -> {
-                    Intent intent = new Intent(this, SessionDetailActivity.class);
-                    intent.putExtra("session_id", session.getId());
-                    startActivity(intent);
-                });
+        if (adapter == null) {
+                adapter = new SessionListAdapter(sessions,
+                    session -> {
+                        Intent intent = new Intent(this, SessionDetailActivity.class);
+                        intent.putExtra("session_id", session.getId());
+                        startActivity(intent);
+                    },
+                    (session, position) -> {
+                        new androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("Elimina gara")
+                            .setMessage("Eliminare \"" + session.getName() + "\"?")
+                            .setPositiveButton("Elimina", (d, w) -> {
+                                SessionStorage.deleteSession(this, session.getId());
+                                sessions.remove(position);
+                                adapter.updateSessions(sessions);
+                                if (sessions.isEmpty()) {
+                                    binding.tvEmpty.setVisibility(View.VISIBLE);
+                                    binding.rvSessions.setVisibility(View.GONE);
+                                }
+                            })
+                            .setNegativeButton("Annulla", null)
+                            .show();
+                    });
                 binding.rvSessions.setLayoutManager(new LinearLayoutManager(this));
                 binding.rvSessions.setAdapter(adapter);
             } else {
