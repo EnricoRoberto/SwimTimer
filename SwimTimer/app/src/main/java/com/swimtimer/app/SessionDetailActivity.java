@@ -56,7 +56,8 @@ public class SessionDetailActivity extends AppCompatActivity {
         String photoPath = session.getPhotoPath();
         if (photoPath != null && !photoPath.isEmpty() && new File(photoPath).exists()) {
             ivPhoto.setVisibility(View.VISIBLE);
-            ivPhoto.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            ivPhoto.setImageBitmap(
+                    SessionListAdapter.loadCorrectlyOrientedBitmap(photoPath));
         }
 
         // Laps
