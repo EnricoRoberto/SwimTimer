@@ -80,11 +80,18 @@ public class SessionDetailActivity extends AppCompatActivity {
         ((MaterialButton) findViewById(R.id.btnShare)).setOnClickListener(v -> shareSession());
     }
 
-    private void showRenameDialog() {
-        final android.widget.EditText input = new android.widget.EditText(this);
+private void showRenameDialog() {
+        android.widget.EditText input = new android.widget.EditText(this);
         input.setText(session.getName());
         input.setSelectAllOnFocus(true);
-        new AlertDialog.Builder(this)
+        input.setTextColor(android.graphics.Color.parseColor("#212121"));
+        input.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(
+                        android.graphics.Color.parseColor("#1565C0")));
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        input.setPadding(pad, pad, pad, pad);
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
                 .setTitle("Rinomina gara")
                 .setView(input)
                 .setPositiveButton("Salva", (d, w) -> {
@@ -98,7 +105,18 @@ public class SessionDetailActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton("Annulla", null)
-                .show();
+                .create();
+
+        dialog.show();
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                .setTextColor(android.graphics.Color.parseColor("#1565C0"));
+        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(android.graphics.Color.parseColor("#757575"));
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(
+                            android.graphics.Color.WHITE));
+        }
     }
 
     private void shareSession() {
