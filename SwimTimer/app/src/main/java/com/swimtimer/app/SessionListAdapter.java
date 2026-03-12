@@ -59,7 +59,7 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
         if (photoPath != null && !photoPath.isEmpty() && new File(photoPath).exists()) {
             h.thumb.setVisibility(View.VISIBLE);
             h.thumbPlaceholder.setVisibility(View.GONE);
-            h.thumb.setImageBitmap(BitmapFactory.decodeFile(photoPath));
+            h.thumb.setImageBitmap(loadCorrectlyOrientedBitmap(photoPath));
         } else {
             h.thumb.setVisibility(View.GONE);
             h.thumbPlaceholder.setVisibility(View.VISIBLE);
@@ -83,6 +83,34 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
             thumb = v.findViewById(R.id.ivThumb);
             thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
             btnDelete = v.findViewById(R.id.btnDelete);
+        }
+    }
+    public static android.graphics.Bitmap loadCorrectlyOrientedBitmap(String path) {
+        try {
+            android.graphics.Bitmap bmp = BitmapFactory.decodeFile(path);
+            androidx.exifinterface.media.ExifInterface exif =
+                    new androidx.exifinterface.media.ExifInterface(path);
+            int orientation = exif.getAttributeInt(
+                    androidx.exifinterface.media.ExifInterface.TAG_ORIENTATION,
+                    androidx.exifinterface.media.ExifInterface.ORIENTATION_NORMAL);
+            int degrees = 0;
+            switch (orientation) {
+                case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_90:
+                    degrees = 90; break;
+                case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_180:
+                    degrees = 180; break;
+                case androidx.exifinterface.media.ExifInterface.ORIENTATION_ROTATE_270:
+                    degrees = 270; break;
+            }
+            if (degrees != 0) {
+                android.graphics.Matrix matrix = new android.graphics.Matrix();
+                matrix.postRotate(degrees);
+                bmp = android.graphics.Bitmap.createBitmap(
+                        bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
+            }
+            return bmp;
+        } catch (Exception e) {
+            return BitmapFactory.decodeFile(path);
         }
     }
 }
