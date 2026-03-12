@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
@@ -16,14 +17,22 @@ import java.util.List;
 public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.VH> {
     private List<SessionData> sessions;
     private final OnSessionClickListener listener;
+    private final OnSessionDeleteListener deleteListener;
 
     public interface OnSessionClickListener {
         void onSessionClick(SessionData s);
     }
 
-    public SessionListAdapter(List<SessionData> sessions, OnSessionClickListener l) {
+    public interface OnSessionDeleteListener {
+        void onSessionDelete(SessionData s, int position);
+    }
+
+    public SessionListAdapter(List<SessionData> sessions,
+                               OnSessionClickListener l,
+                               OnSessionDeleteListener dl) {
         this.sessions = sessions;
         this.listener = l;
+        this.deleteListener = dl;
     }
 
     public void updateSessions(List<SessionData> newSessions) {
@@ -57,6 +66,7 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
         }
 
         h.itemView.setOnClickListener(v -> listener.onSessionClick(s));
+        h.btnDelete.setOnClickListener(v -> deleteListener.onSessionDelete(s, h.getAdapterPosition()));
     }
 
     @Override public int getItemCount() { return sessions.size(); }
@@ -64,6 +74,7 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
     static class VH extends RecyclerView.ViewHolder {
         TextView name, date, time, thumbPlaceholder;
         ImageView thumb;
+        ImageButton btnDelete;
         VH(View v) {
             super(v);
             name = v.findViewById(R.id.tvSessionName);
@@ -71,6 +82,7 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
             time = v.findViewById(R.id.tvSessionTime);
             thumb = v.findViewById(R.id.ivThumb);
             thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
+            btnDelete = v.findViewById(R.id.btnDelete);
         }
     }
 }
