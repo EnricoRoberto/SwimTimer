@@ -74,7 +74,17 @@
                 android:layout_marginTop="4dp"/>
 
         </LinearLayout>
-
+        <!-- Cestino -->
+        <ImageButton
+            android:id="@+id/btnDelete"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_delete"
+            android:tint="#FF5252"
+            android:contentDescription="Elimina"/>
+        
         <!-- Freccia -->
         <TextView
             android:layout_width="wrap_content"
