@@ -18,16 +18,18 @@
         android:background="@android:color/transparent"
         app:elevation="0dp">
 
-        <androidx.appcompat.widget.Toolbar
+       <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="64dp"
-            android:background="@android:color/transparent"
-            android:contentInsetStart="16dp"
-            app:contentInsetStart="16dp"
+            android:minHeight="64dp"
+            android:background="@color/pool_deep"
+            android:elevation="4dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             app:titleTextColor="@android:color/white"
-            app:titleTextAppearance="@style/ToolbarTitle"
-            app:title="@string/app_name"/>
+            app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
+            app:contentInsetStartWithNavigation="0dp"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
