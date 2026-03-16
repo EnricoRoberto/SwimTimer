@@ -169,55 +169,80 @@ public class MainActivity extends AppCompatActivity {
 
     private void showSaveDialog() {
         try {
+            boolean isDark = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
+            int bgColor      = isDark ? Color.parseColor("#1A2A3A") : Color.WHITE;
+            int textPrimary  = isDark ? Color.WHITE : Color.parseColor("#212121");
+            int textSecondary= isDark ? Color.parseColor("#AACCE0") : Color.parseColor("#555555");
+            int dividerColor = isDark ? Color.parseColor("#2A4A6A") : Color.parseColor("#E0E0E0");
+            int editTextColor= isDark ? Color.WHITE : Color.parseColor("#212121");
+            int previewColor = isDark ? Color.parseColor("#64B5F6") : Color.parseColor("#1565C0");
+
             View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
+
+            // Sfondo container
+            dv.findViewById(R.id.dialogContainer)
+                    .setBackgroundColor(bgColor);
+
+            // Colori testi label
+            ((android.widget.TextView) dv.findViewById(R.id.labelName))
+                    .setTextColor(textPrimary);
+            ((android.widget.TextView) dv.findViewById(R.id.labelSpecialty))
+                    .setTextColor(textPrimary);
+            ((android.widget.TextView) dv.findViewById(R.id.labelPhoto))
+                    .setTextColor(textPrimary);
+            ((android.widget.TextView) dv.findViewById(R.id.labelDistance))
+                    .setTextColor(textSecondary);
+            ((android.widget.TextView) dv.findViewById(R.id.labelStyle))
+                    .setTextColor(textSecondary);
+
+            // Dividers
+            dv.findViewById(R.id.divider1).setBackgroundColor(dividerColor);
+            dv.findViewById(R.id.divider2).setBackgroundColor(dividerColor);
+
+            // EditText
             com.google.android.material.textfield.TextInputEditText etName =
                     dv.findViewById(R.id.etSessionName);
-            android.widget.Spinner spinnerDistance = dv.findViewById(R.id.spinnerDistance);
-            android.widget.Spinner spinnerStyle = dv.findViewById(R.id.spinnerStyle);
+            etName.setTextColor(editTextColor);
+            etName.setHintTextColor(textSecondary);
+
+            // Preview specialità
             android.widget.TextView tvPreview = dv.findViewById(R.id.tvSpecialtyPreview);
-            com.google.android.material.button.MaterialButton btnPhoto =
-                    dv.findViewById(R.id.btnTakePhoto);
-            dialogPhotoPreview = dv.findViewById(R.id.ivPhotoPreview);
-            dialogPhotoLabel = dv.findViewById(R.id.tvPhotoLabel);
+            tvPreview.setTextColor(previewColor);
 
-            // Dati spinner
+            // Photo label
+            ((android.widget.TextView) dv.findViewById(R.id.tvPhotoLabel))
+                    .setTextColor(textSecondary);
+
+            // Spinner
+            android.widget.Spinner spinnerDistance = dv.findViewById(R.id.spinnerDistance);
+            android.widget.Spinner spinnerStyle    = dv.findViewById(R.id.spinnerStyle);
+
             String[] distances = {"25m", "50m", "100m", "200m"};
-            String[] styles = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
+            String[] styles    = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
 
-            android.widget.ArrayAdapter<String> distAdapter =
-                    new android.widget.ArrayAdapter<>(this,
-                            android.R.layout.simple_spinner_item, distances);
-            distAdapter.setDropDownViewResource(
-                    android.R.layout.simple_spinner_dropdown_item);
-            spinnerDistance.setAdapter(distAdapter);
+            spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
+            spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
 
-            android.widget.ArrayAdapter<String> styleAdapter =
-                    new android.widget.ArrayAdapter<>(this,
-                            android.R.layout.simple_spinner_item, styles);
-            styleAdapter.setDropDownViewResource(
-                    android.R.layout.simple_spinner_dropdown_item);
-            spinnerStyle.setAdapter(styleAdapter);
-
-            // Aggiorna anteprima specialità
             android.widget.AdapterView.OnItemSelectedListener previewListener =
                     new android.widget.AdapterView.OnItemSelectedListener() {
-                        @Override
-                        public void onItemSelected(android.widget.AdapterView<?> parent,
-                                View view, int pos, long id) {
-                            String dist = distances[spinnerDistance
-                                    .getSelectedItemPosition()];
-                            String style = styles[spinnerStyle
-                                    .getSelectedItemPosition()];
-                            tvPreview.setText("➡ " + dist + " " + style);
+                        @Override public void onItemSelected(
+                                android.widget.AdapterView<?> p, View v, int pos, long id) {
+                            tvPreview.setText("➡ "
+                                    + distances[spinnerDistance.getSelectedItemPosition()]
+                                    + " " + styles[spinnerStyle.getSelectedItemPosition()]);
                         }
-                        @Override
-                        public void onNothingSelected(android.widget.AdapterView<?> p) {}
+                        @Override public void onNothingSelected(
+                                android.widget.AdapterView<?> p) {}
                     };
             spinnerDistance.setOnItemSelectedListener(previewListener);
             spinnerStyle.setOnItemSelectedListener(previewListener);
             tvPreview.setText("➡ 25m Dorso");
 
             // Foto
+            com.google.android.material.button.MaterialButton btnPhoto =
+                    dv.findViewById(R.id.btnTakePhoto);
+            dialogPhotoPreview = dv.findViewById(R.id.ivPhotoPreview);
+            dialogPhotoLabel   = dv.findViewById(R.id.tvPhotoLabel);
             btnPhoto.setOnClickListener(v -> {
                 if (androidx.core.content.ContextCompat.checkSelfPermission(this,
                         android.Manifest.permission.CAMERA)
@@ -232,35 +257,25 @@ public class MainActivity extends AppCompatActivity {
                     .setTitle("Salva Gara")
                     .setView(dv)
                     .setPositiveButton(R.string.save, (d, w) -> {
-                        // Componi il nome sessione
                         String athleteName = etName.getText() != null ?
                                 etName.getText().toString().trim() : "";
-                        String dist = distances[spinnerDistance.getSelectedItemPosition()];
+                        String dist  = distances[spinnerDistance.getSelectedItemPosition()];
                         String style = styles[spinnerStyle.getSelectedItemPosition()];
-                        String specialty = dist + " " + style;
-
-                        String sessionName;
-                        if (athleteName.isEmpty()) {
-                            sessionName = specialty;
-                        } else {
-                            sessionName = athleteName + " — " + specialty;
-                        }
-
+                        String sessionName = athleteName.isEmpty() ?
+                                dist + " " + style :
+                                athleteName + " — " + dist + " " + style;
                         List<Long> savedLaps = new ArrayList<>(laps);
                         Collections.reverse(savedLaps);
                         SessionData session = new SessionData(sessionName,
                                 System.currentTimeMillis(), elapsedTime, savedLaps);
-                        if (currentPhotoPath != null) {
-                            session.setPhotoPath(currentPhotoPath);
-                        }
+                        if (currentPhotoPath != null) session.setPhotoPath(currentPhotoPath);
                         SessionStorage.saveSession(this, session);
                         Toast.makeText(this, R.string.session_saved,
                                 Toast.LENGTH_SHORT).show();
                         resetAll();
                     })
                     .setNegativeButton(R.string.discard, (d, w) -> {
-                        currentPhotoPath = null;
-                        resetAll();
+                        currentPhotoPath = null; resetAll();
                     })
                     .setNeutralButton(R.string.cancel, null)
                     .create();
@@ -272,15 +287,43 @@ public class MainActivity extends AppCompatActivity {
                     .setTextColor(Color.parseColor("#F44336"));
             dialog.getButton(android.app.AlertDialog.BUTTON_NEUTRAL)
                     .setTextColor(Color.parseColor("#757575"));
-            if (dialog.getWindow() != null) {
+            if (dialog.getWindow() != null)
                 dialog.getWindow().setBackgroundDrawable(
-                        new android.graphics.drawable.ColorDrawable(Color.WHITE));
-            }
+                        new android.graphics.drawable.ColorDrawable(bgColor));
 
         } catch (Exception e) {
             android.util.Log.e("SWIMCRASH", "showSaveDialog: " + e);
             resetAll();
         }
+    }
+
+    private android.widget.ArrayAdapter<String> makeSpinnerAdapter(
+            String[] items, int textColor, int bgColor) {
+        android.widget.ArrayAdapter<String> adapter =
+                new android.widget.ArrayAdapter<String>(this,
+                        android.R.layout.simple_spinner_item, items) {
+                    @Override
+                    public View getView(int pos, View convertView, android.view.ViewGroup parent) {
+                        android.widget.TextView tv =
+                                (android.widget.TextView) super.getView(pos, convertView, parent);
+                        tv.setTextColor(textColor);
+                        tv.setBackgroundColor(bgColor);
+                        return tv;
+                    }
+                    @Override
+                    public View getDropDownView(int pos, View convertView,
+                            android.view.ViewGroup parent) {
+                        android.widget.TextView tv =
+                                (android.widget.TextView) super.getDropDownView(
+                                        pos, convertView, parent);
+                        tv.setTextColor(textColor);
+                        tv.setBackgroundColor(bgColor);
+                        tv.setPadding(32, 24, 32, 24);
+                        return tv;
+                    }
+                };
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        return adapter;
     }
 
     private void launchCamera() {
