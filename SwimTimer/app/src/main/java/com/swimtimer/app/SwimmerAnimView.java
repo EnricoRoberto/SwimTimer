@@ -1,39 +1,55 @@
 package com.swimtimer.app;
 
+import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 
 public class SwimmerAnimView extends View {
 
-    private Paint bodyPaint, capPaint, armPaint, suitPaint, gogglePaint;
+    private Paint bodyPaint, capPaint, armPaint, suitPaint, gogglePaint, linePaint;
     private float kickAngle = 0f;
     private float armAngle = 0f;
-    private ValueAnimator kickAnimator, armAnimator;
+
+    // Posizione orizzontale dell'omino (0.0 = sinistra, 1.0 = destra)
+    private float swimX = 0.2f;
+    // Direzione: +1 = va a destra, -1 = va a sinistra
+    private float direction = 1f;
+    // Scala flip orizzontale per specchiare l'omino
+    private float flipScale = 1f;
+    // Angolo capriola (0 = normale, 180 = capovolto durante flip)
+    private float tumbleAngle = 0f;
+    private boolean isTumbling = false;
+
+    private ValueAnimator kickAnimator, armAnimator, swimAnimator;
+    private ValueAnimator tumbleAnimator;
 
     public SwimmerAnimView(Context context) { super(context); init(); }
     public SwimmerAnimView(Context context, AttributeSet a) { super(context, a); init(); }
 
     private void init() {
         bodyPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        bodyPaint.setColor(Color.parseColor("#F5D5B0")); // carnagione
+        bodyPaint.setColor(Color.parseColor("#F5D5B0"));
         bodyPaint.setStyle(Paint.Style.FILL);
 
         suitPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        suitPaint.setColor(Color.parseColor("#1565C0")); // costume blu
+        suitPaint.setColor(Color.parseColor("#1565C0"));
         suitPaint.setStyle(Paint.Style.FILL);
 
         capPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        capPaint.setColor(Color.parseColor("#FFD600")); // cuffia oro
+        capPaint.setColor(Color.parseColor("#FFD600"));
         capPaint.setStyle(Paint.Style.FILL);
 
         gogglePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        gogglePaint.setColor(Color.parseColor("#29B6F6")); // occhialini azzurri
+        gogglePaint.setColor(Color.parseColor("#29B6F6"));
         gogglePaint.setStyle(Paint.Style.FILL);
 
         armPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -42,37 +58,100 @@ public class SwimmerAnimView extends View {
         armPaint.setStrokeCap(Paint.Cap.ROUND);
         armPaint.setStyle(Paint.Style.STROKE);
 
-        // Animazione gambe (calci)
+        linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        linePaint.setColor(Color.parseColor("#29B6F6"));
+        linePaint.setStrokeWidth(2f);
+        linePaint.setStyle(Paint.Style.STROKE);
+
+        // Animazione calci
         kickAnimator = ValueAnimator.ofFloat(-18f, 18f);
         kickAnimator.setDuration(400);
         kickAnimator.setRepeatCount(ValueAnimator.INFINITE);
         kickAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        kickAnimator.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+        kickAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         kickAnimator.addUpdateListener(a -> {
             kickAngle = (float) a.getAnimatedValue();
             invalidate();
         });
 
-        // Animazione braccia (stile libero)
+        // Animazione braccia
         armAnimator = ValueAnimator.ofFloat(0f, 360f);
         armAnimator.setDuration(900);
         armAnimator.setRepeatCount(ValueAnimator.INFINITE);
-        armAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+        armAnimator.setInterpolator(new LinearInterpolator());
         armAnimator.addUpdateListener(a -> {
             armAngle = (float) a.getAnimatedValue();
             invalidate();
         });
+
+        // Animazione movimento orizzontale (avanti e indietro nella view)
+        swimAnimator = ValueAnimator.ofFloat(0f, 1f);
+        swimAnimator.setDuration(4000);
+        swimAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        swimAnimator.setInterpolator(new LinearInterpolator());
+        swimAnimator.addUpdateListener(a -> {
+            float t = (float) a.getAnimatedValue();
+            // Muove da 0.1 a 0.9 in base alla direzione corrente
+            if (direction > 0) {
+                swimX = 0.1f + t * 0.8f;
+            } else {
+                swimX = 0.9f - t * 0.8f;
+            }
+            invalidate();
+        });
+    }
+
+    /** Chiamato da MainActivity quando si preme Vasca */
+    public void doTumble() {
+        if (isTumbling) return;
+        isTumbling = true;
+
+        // Ferma il movimento orizzontale durante la capriola
+        if (swimAnimator != null) swimAnimator.cancel();
+
+        // Animazione capriola: rotazione 360° su se stesso
+        tumbleAnimator = ValueAnimator.ofFloat(0f, 360f);
+        tumbleAnimator.setDuration(600);
+        tumbleAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        tumbleAnimator.addUpdateListener(a -> {
+            tumbleAngle = (float) a.getAnimatedValue();
+            invalidate();
+        });
+        tumbleAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                tumbleAngle = 0f;
+                isTumbling = false;
+                // Inverti direzione
+                direction = -direction;
+                flipScale = direction;
+                // Riavvia il movimento nella nuova direzione
+                if (kickAnimator.isRunning()) {
+                    swimAnimator.setCurrentFraction(0f);
+                    swimAnimator.start();
+                }
+            }
+        });
+        tumbleAnimator.start();
     }
 
     public void setRunning(boolean running) {
         if (running) {
             if (!kickAnimator.isRunning()) kickAnimator.start();
             if (!armAnimator.isRunning()) armAnimator.start();
+            if (!swimAnimator.isRunning()) swimAnimator.start();
         } else {
             kickAnimator.cancel();
             armAnimator.cancel();
+            swimAnimator.cancel();
+            if (tumbleAnimator != null) tumbleAnimator.cancel();
             kickAngle = 0f;
             armAngle = 0f;
+            tumbleAngle = 0f;
+            isTumbling = false;
+            swimX = 0.2f;
+            direction = 1f;
+            flipScale = 1f;
             invalidate();
         }
     }
@@ -84,15 +163,18 @@ public class SwimmerAnimView extends View {
         int h = getHeight();
         if (w == 0 || h == 0) return;
 
-        float cx = w / 2f;
+        float cx = w * swimX;
         float cy = h / 2f;
-        float scale = Math.min(w, h * 2.5f) / 160f; // scala adattiva più grande
+        float scale = Math.min(w, h * 2.5f) / 160f;
 
         canvas.save();
         canvas.translate(cx, cy);
-        canvas.scale(scale, scale);
 
-        // === CORPO (torso orizzontale) ===
+        // Flip orizzontale per direzione + capriola
+        canvas.scale(flipScale * scale, scale);
+        canvas.rotate(tumbleAngle, 0, 0);
+
+        // === CORPO ===
         suitPaint.setColor(Color.parseColor("#1565C0"));
         canvas.drawRoundRect(new RectF(-42, -10, 20, 10), 10, 10, suitPaint);
 
@@ -106,13 +188,9 @@ public class SwimmerAnimView extends View {
         // === OCCHIALINI ===
         gogglePaint.setAlpha(200);
         canvas.drawCircle(38, 2, 4, gogglePaint);
-        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        linePaint.setColor(Color.parseColor("#29B6F6"));
-        linePaint.setStrokeWidth(2f);
-        linePaint.setStyle(Paint.Style.STROKE);
         canvas.drawLine(34, 2, 30, 0, linePaint);
 
-        // === BRACCIO DESTRO (in acqua - stile libero) ===
+        // === BRACCIO DESTRO ===
         float rad = (float) Math.toRadians(armAngle);
         float bx = (float)(18 * Math.cos(rad));
         float by = (float)(8 * Math.sin(rad));
@@ -120,20 +198,18 @@ public class SwimmerAnimView extends View {
         armPaint.setStrokeWidth(7f);
         canvas.drawLine(18, -4, 18 + bx * 3, -4 + by, armPaint);
 
-        // === BRACCIO SINISTRO (fuori acqua - opposto) ===
+        // === BRACCIO SINISTRO ===
         float rad2 = (float) Math.toRadians(armAngle + 180);
         float bx2 = (float)(18 * Math.cos(rad2));
         float by2 = (float)(8 * Math.sin(rad2));
         canvas.drawLine(0, -4, bx2, -4 + by2, armPaint);
 
-        // === GAMBE con calci ===
+        // === GAMBE ===
         armPaint.setStrokeWidth(8f);
-        // Gamba su
         canvas.save();
         canvas.rotate(kickAngle, -42, 0);
         canvas.drawLine(-42, 0, -72, -8, armPaint);
         canvas.restore();
-        // Gamba giù (opposta)
         canvas.save();
         canvas.rotate(-kickAngle, -42, 0);
         canvas.drawLine(-42, 4, -72, 12, armPaint);
@@ -147,5 +223,7 @@ public class SwimmerAnimView extends View {
         super.onDetachedFromWindow();
         if (kickAnimator != null) kickAnimator.cancel();
         if (armAnimator != null) armAnimator.cancel();
+        if (swimAnimator != null) swimAnimator.cancel();
+        if (tumbleAnimator != null) tumbleAnimator.cancel();
     }
 }
