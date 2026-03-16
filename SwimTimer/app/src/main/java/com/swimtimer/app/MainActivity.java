@@ -146,6 +146,8 @@ public class MainActivity extends AppCompatActivity {
         lastLapTime = total;
         lapAdapter.notifyItemInserted(0);
         binding.rvLaps.scrollToPosition(0);
+        // Capriola dell'omino!
+        binding.swimmerView.doTumble();
     }
 
     private void onResetPressed() {
