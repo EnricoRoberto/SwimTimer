@@ -1,6 +1,8 @@
 package com.swimtimer.app;
 
-import android.view.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -8,33 +10,77 @@ import java.util.List;
 
 public class DetailLapAdapter extends RecyclerView.Adapter<DetailLapAdapter.VH> {
     private final List<Long> laps;
+    private int recordType = SessionStorage.RECORD_NONE;
+
     public DetailLapAdapter(List<Long> laps) { this.laps = laps; }
+
+    public void setRecordType(int recordType) {
+        this.recordType = recordType;
+        notifyDataSetChanged();
+    }
 
     @NonNull @Override
     public VH onCreateViewHolder(@NonNull ViewGroup p, int t) {
-        return new VH(LayoutInflater.from(p.getContext()).inflate(R.layout.item_detail_lap, p, false));
+        return new VH(LayoutInflater.from(p.getContext())
+                .inflate(R.layout.item_detail_lap, p, false));
     }
 
-    @Override public void onBindViewHolder(@NonNull VH h, int pos) {
-        long t = laps.get(pos);
-        long cum = 0; for (int i = 0; i <= pos; i++) cum += laps.get(i);
-        h.num.setText(h.itemView.getContext().getString(R.string.lap_n, pos + 1));
-        h.time.setText(MainActivity.formatTime(t));
-        h.cum.setText("Σ " + MainActivity.formatTime(cum));
-        long min = Long.MAX_VALUE, max = Long.MIN_VALUE;
-        for (long l : laps) { if (l < min) min = l; if (l > max) max = l; }
-        if (laps.size() > 1) {
-            if (t == min) h.time.setTextColor(0xFF4CAF50);
-            else if (t == max) h.time.setTextColor(0xFFF44336);
-            else h.time.setTextColor(0xFF212121);
+    @Override
+    public void onBindViewHolder(@NonNull VH h, int i) {
+        long lapTime = laps.get(i);
+
+        long fastest = Long.MAX_VALUE, slowest = 0;
+        for (Long l : laps) {
+            if (l < fastest) fastest = l;
+            if (l > slowest) slowest = l;
+        }
+
+        h.tvLapNumber.setText("Vasca " + (i + 1));
+        h.tvLapTime.setText(MainActivity.formatTime(lapTime));
+
+        if (lapTime == fastest && laps.size() > 1) {
+            h.tvLapTime.setTextColor(0xFF4CAF50);
+            h.tvLapNumber.setTextColor(0xFF4CAF50);
+        } else if (lapTime == slowest && laps.size() > 1) {
+            h.tvLapTime.setTextColor(0xFFF44336);
+            h.tvLapNumber.setTextColor(0xFFF44336);
+        } else {
+            h.tvLapTime.setTextColor(0xFFFFFFFF);
+            h.tvLapNumber.setTextColor(0xFFFFFFFF);
+        }
+
+        // Icona record solo sulla vasca più veloce
+        if (lapTime == fastest && laps.size() > 0) {
+            switch (recordType) {
+                case SessionStorage.RECORD_ABSOLUTE:
+                    h.tvRecord.setText(" 🥇");
+                    h.tvRecord.setVisibility(View.VISIBLE);
+                    break;
+                case SessionStorage.RECORD_IMPROVED:
+                    h.tvRecord.setText(" 📈");
+                    h.tvRecord.setVisibility(View.VISIBLE);
+                    break;
+                case SessionStorage.RECORD_BOTH:
+                    h.tvRecord.setText(" 🥇📈");
+                    h.tvRecord.setVisibility(View.VISIBLE);
+                    break;
+                default:
+                    h.tvRecord.setVisibility(View.GONE);
+            }
+        } else {
+            h.tvRecord.setVisibility(View.GONE);
         }
     }
 
     @Override public int getItemCount() { return laps.size(); }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView num, time, cum;
-        VH(@NonNull View v) { super(v);
-            num = v.findViewById(R.id.tvDNum); time = v.findViewById(R.id.tvDTime); cum = v.findViewById(R.id.tvDCum); }
+        TextView tvLapNumber, tvLapTime, tvRecord;
+        VH(View v) {
+            super(v);
+            tvLapNumber = v.findViewById(R.id.tvLapNumber);
+            tvLapTime   = v.findViewById(R.id.tvLapTime);
+            tvRecord    = v.findViewById(R.id.tvRecord);
+        }
     }
 }
