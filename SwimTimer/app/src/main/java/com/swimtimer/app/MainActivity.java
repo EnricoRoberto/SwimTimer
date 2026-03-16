@@ -170,35 +170,85 @@ public class MainActivity extends AppCompatActivity {
     private void showSaveDialog() {
         try {
             View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
-            com.google.android.material.textfield.TextInputEditText et =
+            com.google.android.material.textfield.TextInputEditText etName =
                     dv.findViewById(R.id.etSessionName);
-            MaterialButton btnPhoto = dv.findViewById(R.id.btnTakePhoto);
+            android.widget.Spinner spinnerDistance = dv.findViewById(R.id.spinnerDistance);
+            android.widget.Spinner spinnerStyle = dv.findViewById(R.id.spinnerStyle);
+            android.widget.TextView tvPreview = dv.findViewById(R.id.tvSpecialtyPreview);
+            com.google.android.material.button.MaterialButton btnPhoto =
+                    dv.findViewById(R.id.btnTakePhoto);
             dialogPhotoPreview = dv.findViewById(R.id.ivPhotoPreview);
             dialogPhotoLabel = dv.findViewById(R.id.tvPhotoLabel);
 
+            // Dati spinner
+            String[] distances = {"25m", "50m", "100m", "200m"};
+            String[] styles = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
+
+            android.widget.ArrayAdapter<String> distAdapter =
+                    new android.widget.ArrayAdapter<>(this,
+                            android.R.layout.simple_spinner_item, distances);
+            distAdapter.setDropDownViewResource(
+                    android.R.layout.simple_spinner_dropdown_item);
+            spinnerDistance.setAdapter(distAdapter);
+
+            android.widget.ArrayAdapter<String> styleAdapter =
+                    new android.widget.ArrayAdapter<>(this,
+                            android.R.layout.simple_spinner_item, styles);
+            styleAdapter.setDropDownViewResource(
+                    android.R.layout.simple_spinner_dropdown_item);
+            spinnerStyle.setAdapter(styleAdapter);
+
+            // Aggiorna anteprima specialità
+            android.widget.AdapterView.OnItemSelectedListener previewListener =
+                    new android.widget.AdapterView.OnItemSelectedListener() {
+                        @Override
+                        public void onItemSelected(android.widget.AdapterView<?> parent,
+                                View view, int pos, long id) {
+                            String dist = distances[spinnerDistance
+                                    .getSelectedItemPosition()];
+                            String style = styles[spinnerStyle
+                                    .getSelectedItemPosition()];
+                            tvPreview.setText("➡ " + dist + " " + style);
+                        }
+                        @Override
+                        public void onNothingSelected(android.widget.AdapterView<?> p) {}
+                    };
+            spinnerDistance.setOnItemSelectedListener(previewListener);
+            spinnerStyle.setOnItemSelectedListener(previewListener);
+            tvPreview.setText("➡ 25m Dorso");
+
+            // Foto
             btnPhoto.setOnClickListener(v -> {
-                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                        == PackageManager.PERMISSION_GRANTED) {
+                if (androidx.core.content.ContextCompat.checkSelfPermission(this,
+                        android.Manifest.permission.CAMERA)
+                        == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                     launchCamera();
                 } else {
-                    requestCameraPermission.launch(Manifest.permission.CAMERA);
+                    requestCameraPermission.launch(android.Manifest.permission.CAMERA);
                 }
             });
 
-            AlertDialog dialog = new AlertDialog.Builder(this)
+            android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
                     .setTitle("Salva Gara")
                     .setView(dv)
                     .setPositiveButton(R.string.save, (d, w) -> {
-                        String name = et.getText() != null ?
-                                et.getText().toString().trim() : "";
-                        if (name.isEmpty()) {
-                            name = getString(R.string.default_session_name)
-                                    + " " + java.text.DateFormat.getDateTimeInstance()
-                                    .format(new java.util.Date());
+                        // Componi il nome sessione
+                        String athleteName = etName.getText() != null ?
+                                etName.getText().toString().trim() : "";
+                        String dist = distances[spinnerDistance.getSelectedItemPosition()];
+                        String style = styles[spinnerStyle.getSelectedItemPosition()];
+                        String specialty = dist + " " + style;
+
+                        String sessionName;
+                        if (athleteName.isEmpty()) {
+                            sessionName = specialty;
+                        } else {
+                            sessionName = athleteName + " — " + specialty;
                         }
+
                         List<Long> savedLaps = new ArrayList<>(laps);
                         Collections.reverse(savedLaps);
-                        SessionData session = new SessionData(name,
+                        SessionData session = new SessionData(sessionName,
                                 System.currentTimeMillis(), elapsedTime, savedLaps);
                         if (currentPhotoPath != null) {
                             session.setPhotoPath(currentPhotoPath);
@@ -216,11 +266,11 @@ public class MainActivity extends AppCompatActivity {
                     .create();
 
             dialog.show();
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
                     .setTextColor(Color.parseColor("#1565C0"));
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
+            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
                     .setTextColor(Color.parseColor("#F44336"));
-            dialog.getButton(AlertDialog.BUTTON_NEUTRAL)
+            dialog.getButton(android.app.AlertDialog.BUTTON_NEUTRAL)
                     .setTextColor(Color.parseColor("#757575"));
             if (dialog.getWindow() != null) {
                 dialog.getWindow().setBackgroundDrawable(
