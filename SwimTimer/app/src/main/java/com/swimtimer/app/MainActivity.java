@@ -9,13 +9,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
-import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -49,16 +48,21 @@ public class MainActivity extends AppCompatActivity {
     private ThemeManager themeManager;
     private LapAdapter lapAdapter;
 
+    // Setup opzionale
+    private String pendingAthleteName = "";
+    private String pendingSpecialty   = "";
+    private boolean setupDone         = false;
+    private int currentRecordType     = SessionStorage.RECORD_NONE;
+
     // Foto
-    private String currentPhotoPath = null;
-    private Uri photoUri = null;
+    private String currentPhotoPath   = null;
+    private Uri photoUri               = null;
     private ImageView dialogPhotoPreview = null;
-    private TextView dialogPhotoLabel = null;
+    private TextView dialogPhotoLabel   = null;
 
     private final ActivityResultLauncher<Uri> takePictureLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
                 if (success && currentPhotoPath != null) {
-                    // Mostra anteprima nel dialog
                     if (dialogPhotoPreview != null) {
                         dialogPhotoPreview.setVisibility(View.VISIBLE);
                         dialogPhotoPreview.setImageURI(Uri.fromFile(new File(currentPhotoPath)));
@@ -75,8 +79,8 @@ public class MainActivity extends AppCompatActivity {
     private final ActivityResultLauncher<String> requestCameraPermission =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
                 if (granted) launchCamera();
-                else Toast.makeText(this,
-                        "Permesso fotocamera negato", Toast.LENGTH_SHORT).show();
+                else Toast.makeText(this, "Permesso fotocamera negato",
+                        Toast.LENGTH_SHORT).show();
             });
 
     private final Runnable timerRunnable = new Runnable() {
@@ -111,16 +115,149 @@ public class MainActivity extends AppCompatActivity {
             lapAdapter = new LapAdapter(laps);
             binding.rvLaps.setLayoutManager(new LinearLayoutManager(this));
             binding.rvLaps.setAdapter(lapAdapter);
+
             binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
-            binding.btnLap.setOnClickListener(v -> { if (isRunning) { vibrate(); recordLap(); }});
+            binding.btnLap.setOnClickListener(v -> {
+                if (isRunning) { vibrate(); recordLap(); }
+            });
             binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
+
+            // Pulsante setup opzionale
+            binding.btnSetup.setOnClickListener(v -> showSetupDialog());
+
             updateUI();
+            updateSetupBar();
         } catch (Exception e) {
             new AlertDialog.Builder(this)
                     .setTitle("Errore onCreate")
                     .setMessage(e.toString())
                     .setPositiveButton("OK", null).show();
         }
+    }
+
+    /** Aggiorna il pulsante setup in base allo stato */
+    private void updateSetupBar() {
+        if (setupDone) {
+            String label = pendingAthleteName.isEmpty() ?
+                    pendingSpecialty :
+                    pendingAthleteName + " — " + pendingSpecialty;
+            binding.btnSetup.setText("✅  " + label);
+            binding.btnSetup.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(
+                            Color.parseColor("#4CAF50")));
+            binding.btnSetup.setTextColor(Color.WHITE);
+        } else {
+            binding.btnSetup.setText("⚙  Imposta atleta e specialità");
+            binding.btnSetup.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(
+                            Color.parseColor("#FFD600")));
+            binding.btnSetup.setTextColor(Color.parseColor("#212121"));
+        }
+        // Nascondi il pulsante durante il cronometraggio
+        binding.btnSetup.setVisibility(isRunning ? View.GONE : View.VISIBLE);
+    }
+
+    /** Dialog setup opzionale — non blocca, chiamabile in qualsiasi momento */
+    private void showSetupDialog() {
+        boolean isDark    = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
+        int bgColor       = isDark ? Color.parseColor("#1A2A3A") : Color.WHITE;
+        int textPrimary   = isDark ? Color.WHITE : Color.parseColor("#212121");
+        int textSecondary = isDark ? Color.parseColor("#AACCE0") : Color.parseColor("#555555");
+        int dividerColor  = isDark ? Color.parseColor("#2A4A6A") : Color.parseColor("#E0E0E0");
+        int previewColor  = isDark ? Color.parseColor("#64B5F6") : Color.parseColor("#1565C0");
+
+        View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
+        dv.findViewById(R.id.dialogContainer).setBackgroundColor(bgColor);
+
+        // Nascondi sezione foto
+        dv.findViewById(R.id.labelPhoto).setVisibility(View.GONE);
+        dv.findViewById(R.id.btnTakePhoto).setVisibility(View.GONE);
+        dv.findViewById(R.id.tvPhotoLabel).setVisibility(View.GONE);
+        dv.findViewById(R.id.ivPhotoPreview).setVisibility(View.GONE);
+        dv.findViewById(R.id.divider2).setVisibility(View.GONE);
+
+        ((TextView) dv.findViewById(R.id.labelName)).setTextColor(textPrimary);
+        ((TextView) dv.findViewById(R.id.labelSpecialty)).setTextColor(textPrimary);
+        ((TextView) dv.findViewById(R.id.labelDistance)).setTextColor(textSecondary);
+        ((TextView) dv.findViewById(R.id.labelStyle)).setTextColor(textSecondary);
+        dv.findViewById(R.id.divider1).setBackgroundColor(dividerColor);
+
+        com.google.android.material.textfield.TextInputEditText etName =
+                dv.findViewById(R.id.etSessionName);
+        etName.setTextColor(textPrimary);
+        etName.setHintTextColor(textSecondary);
+        if (!pendingAthleteName.isEmpty()) {
+            etName.setText(pendingAthleteName);
+            etName.setSelection(pendingAthleteName.length());
+        }
+
+        android.widget.TextView tvPreview = dv.findViewById(R.id.tvSpecialtyPreview);
+        tvPreview.setTextColor(previewColor);
+
+        android.widget.Spinner spinnerDistance = dv.findViewById(R.id.spinnerDistance);
+        android.widget.Spinner spinnerStyle    = dv.findViewById(R.id.spinnerStyle);
+        final String[] distances = {"25m", "50m", "100m", "200m"};
+        final String[] styles    = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
+
+        spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
+        spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
+
+        // Preseleziona ultima specialità
+        if (!pendingSpecialty.isEmpty()) {
+            for (int i = 0; i < distances.length; i++) {
+                if (pendingSpecialty.startsWith(distances[i])) {
+                    spinnerDistance.setSelection(i); break;
+                }
+            }
+            for (int i = 0; i < styles.length; i++) {
+                if (pendingSpecialty.contains(styles[i])) {
+                    spinnerStyle.setSelection(i); break;
+                }
+            }
+        }
+
+        android.widget.AdapterView.OnItemSelectedListener previewListener =
+                new android.widget.AdapterView.OnItemSelectedListener() {
+                    @Override public void onItemSelected(
+                            android.widget.AdapterView<?> p, View v, int pos, long id) {
+                        tvPreview.setText("➡ "
+                                + distances[spinnerDistance.getSelectedItemPosition()]
+                                + " " + styles[spinnerStyle.getSelectedItemPosition()]);
+                    }
+                    @Override public void onNothingSelected(
+                            android.widget.AdapterView<?> p) {}
+                };
+        spinnerDistance.setOnItemSelectedListener(previewListener);
+        spinnerStyle.setOnItemSelectedListener(previewListener);
+        tvPreview.setText("➡ " + distances[spinnerDistance.getSelectedItemPosition()]
+                + " " + styles[spinnerStyle.getSelectedItemPosition()]);
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("⚙ Setup gara")
+                .setView(dv)
+                .setPositiveButton("Conferma", (d, w) -> {
+                    pendingAthleteName = etName.getText() != null ?
+                            etName.getText().toString().trim() : "";
+                    pendingSpecialty = distances[spinnerDistance.getSelectedItemPosition()]
+                            + " " + styles[spinnerStyle.getSelectedItemPosition()];
+                    setupDone = true;
+                    updateSetupBar();
+                    // Se il cronometro sta girando aggiorna subito i record
+                    if (isRunning && !laps.isEmpty()) {
+                        updateRecordBadge();
+                    }
+                })
+                .setNegativeButton("Annulla", null)
+                .create();
+
+        dialog.show();
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                .setTextColor(Color.parseColor("#1565C0"));
+        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(Color.parseColor("#757575"));
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(bgColor));
     }
 
     private void toggleTimer() {
@@ -138,16 +275,30 @@ public class MainActivity extends AppCompatActivity {
             binding.waveView.setRunning(true);
         }
         updateUI();
+        updateSetupBar();
     }
 
     private void recordLap() {
         long total = elapsedTime + (System.currentTimeMillis() - startTime);
-        laps.add(0, total - lastLapTime);
+        long lapTime = total - lastLapTime;
+        laps.add(0, lapTime);
         lastLapTime = total;
         lapAdapter.notifyItemInserted(0);
         binding.rvLaps.scrollToPosition(0);
-        // Capriola dell'omino!
         binding.swimmerView.doTumble();
+
+        // Aggiorna icona record in tempo reale solo se setup fatto
+        if (setupDone) updateRecordBadge();
+    }
+
+    /** Ricalcola e aggiorna l'icona record sulla vasca più veloce */
+    private void updateRecordBadge() {
+        if (laps.isEmpty() || !setupDone) return;
+        long fastest = Long.MAX_VALUE;
+        for (Long l : laps) if (l < fastest) fastest = l;
+        currentRecordType = SessionStorage.checkRecord(
+                this, pendingSpecialty, fastest, null);
+        lapAdapter.setRecordType(currentRecordType);
     }
 
     private void onResetPressed() {
@@ -158,10 +309,9 @@ public class MainActivity extends AppCompatActivity {
             binding.swimmerView.setRunning(false);
             binding.waveView.setRunning(false);
             updateUI();
+            updateSetupBar();
         }
         if (elapsedTime > 0) {
-            // Controlla record prima di mostrare il dialog
-            checkAndShowRecord();
             currentPhotoPath = null;
             showSaveDialog();
         } else {
@@ -169,106 +319,90 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void checkAndShowRecord() {
-        if (laps.isEmpty()) return;
-
-        // Trova vasca più veloce
-        long fastest = Long.MAX_VALUE;
-        for (Long l : laps) if (l < fastest) fastest = l;
-
-        // Recupera specialità dall'ultimo salvataggio pendente
-        // Non è ancora salvata quindi usiamo il campo pendingSpecialty
-        // che verrà impostato quando l'utente sceglie la specialità nel dialog
-        // Per ora mostriamo l'icona nel dialog di salvataggio — 
-        // il confronto vero avviene in showSaveDialog con la specialità scelta
-    }
-
     private void showSaveDialog() {
         try {
-            boolean isDark = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
-            int bgColor      = isDark ? Color.parseColor("#1A2A3A") : Color.WHITE;
-            int textPrimary  = isDark ? Color.WHITE : Color.parseColor("#212121");
-            int textSecondary= isDark ? Color.parseColor("#AACCE0") : Color.parseColor("#555555");
-            int dividerColor = isDark ? Color.parseColor("#2A4A6A") : Color.parseColor("#E0E0E0");
-            int editTextColor= isDark ? Color.WHITE : Color.parseColor("#212121");
-            int previewColor = isDark ? Color.parseColor("#64B5F6") : Color.parseColor("#1565C0");
+            boolean isDark    = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
+            int bgColor       = isDark ? Color.parseColor("#1A2A3A") : Color.WHITE;
+            int textPrimary   = isDark ? Color.WHITE : Color.parseColor("#212121");
+            int textSecondary = isDark ? Color.parseColor("#AACCE0") : Color.parseColor("#555555");
+            int dividerColor  = isDark ? Color.parseColor("#2A4A6A") : Color.parseColor("#E0E0E0");
+            int previewColor  = isDark ? Color.parseColor("#64B5F6") : Color.parseColor("#1565C0");
 
             View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
-
-            // Sfondo container
-            dv.findViewById(R.id.dialogContainer)
-                    .setBackgroundColor(bgColor);
-
-            // Colori testi label
-            ((android.widget.TextView) dv.findViewById(R.id.labelName))
-                    .setTextColor(textPrimary);
-            ((android.widget.TextView) dv.findViewById(R.id.labelSpecialty))
-                    .setTextColor(textPrimary);
-            ((android.widget.TextView) dv.findViewById(R.id.labelPhoto))
-                    .setTextColor(textPrimary);
-            ((android.widget.TextView) dv.findViewById(R.id.labelDistance))
-                    .setTextColor(textSecondary);
-            ((android.widget.TextView) dv.findViewById(R.id.labelStyle))
-                    .setTextColor(textSecondary);
-
-            // Dividers
+            dv.findViewById(R.id.dialogContainer).setBackgroundColor(bgColor);
+            ((TextView) dv.findViewById(R.id.labelName)).setTextColor(textPrimary);
+            ((TextView) dv.findViewById(R.id.labelSpecialty)).setTextColor(textPrimary);
+            ((TextView) dv.findViewById(R.id.labelPhoto)).setTextColor(textPrimary);
+            ((TextView) dv.findViewById(R.id.labelDistance)).setTextColor(textSecondary);
+            ((TextView) dv.findViewById(R.id.labelStyle)).setTextColor(textSecondary);
             dv.findViewById(R.id.divider1).setBackgroundColor(dividerColor);
             dv.findViewById(R.id.divider2).setBackgroundColor(dividerColor);
 
-            // EditText
             com.google.android.material.textfield.TextInputEditText etName =
                     dv.findViewById(R.id.etSessionName);
-            etName.setTextColor(editTextColor);
+            etName.setTextColor(textPrimary);
             etName.setHintTextColor(textSecondary);
 
-            // Preview specialità
+            // Precompila con setup se fatto
+            if (!pendingAthleteName.isEmpty()) {
+                etName.setText(pendingAthleteName);
+                etName.setSelection(pendingAthleteName.length());
+            }
+
             android.widget.TextView tvPreview = dv.findViewById(R.id.tvSpecialtyPreview);
             tvPreview.setTextColor(previewColor);
+            ((TextView) dv.findViewById(R.id.tvPhotoLabel)).setTextColor(textSecondary);
 
-            // Photo label
-            ((android.widget.TextView) dv.findViewById(R.id.tvPhotoLabel))
-                    .setTextColor(textSecondary);
-
-            // Spinner
             android.widget.Spinner spinnerDistance = dv.findViewById(R.id.spinnerDistance);
             android.widget.Spinner spinnerStyle    = dv.findViewById(R.id.spinnerStyle);
-
-            String[] distances = {"25m", "50m", "100m", "200m"};
-            String[] styles    = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
+            final String[] distances = {"25m", "50m", "100m", "200m"};
+            final String[] styles    = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
 
             spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
             spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
 
-            // Aggiorna anteprima specialità e controlla record
+            // Preseleziona specialità da setup
+            if (!pendingSpecialty.isEmpty()) {
+                for (int i = 0; i < distances.length; i++) {
+                    if (pendingSpecialty.startsWith(distances[i])) {
+                        spinnerDistance.setSelection(i); break;
+                    }
+                }
+                for (int i = 0; i < styles.length; i++) {
+                    if (pendingSpecialty.contains(styles[i])) {
+                        spinnerStyle.setSelection(i); break;
+                    }
+                }
+            }
+
             android.widget.AdapterView.OnItemSelectedListener previewListener =
                     new android.widget.AdapterView.OnItemSelectedListener() {
                         @Override public void onItemSelected(
                                 android.widget.AdapterView<?> p, View v, int pos, long id) {
-                            String dist  = distances[spinnerDistance.getSelectedItemPosition()];
-                            String style = styles[spinnerStyle.getSelectedItemPosition()];
+                            String dist    = distances[spinnerDistance.getSelectedItemPosition()];
+                            String style   = styles[spinnerStyle.getSelectedItemPosition()];
                             String specialty = dist + " " + style;
-                            tvPreview.setText("➡ " + specialty);
-
-                            // Controlla record per questa specialità
                             if (!laps.isEmpty()) {
                                 long fastest = Long.MAX_VALUE;
                                 for (Long l : laps) if (l < fastest) fastest = l;
                                 int record = SessionStorage.checkRecord(
                                         MainActivity.this, specialty, fastest, null);
+                                lapAdapter.setRecordType(record);
                                 switch (record) {
                                     case SessionStorage.RECORD_ABSOLUTE:
-                                        tvPreview.setText("➡ " + specialty + "  🥇 Record assoluto!");
+                                        tvPreview.setText("➡ " + specialty + "  🥇 Record!");
                                         break;
                                     case SessionStorage.RECORD_IMPROVED:
                                         tvPreview.setText("➡ " + specialty + "  📈 Migliorato!");
                                         break;
                                     case SessionStorage.RECORD_BOTH:
-                                        tvPreview.setText("➡ " + specialty + "  🥇📈 Record + Migliorato!");
+                                        tvPreview.setText("➡ " + specialty + "  🥇📈 Record+Migliorato!");
                                         break;
                                     default:
                                         tvPreview.setText("➡ " + specialty);
                                 }
-                                lapAdapter.setRecordType(record);
+                            } else {
+                                tvPreview.setText("➡ " + dist + " " + style);
                             }
                         }
                         @Override public void onNothingSelected(
@@ -276,7 +410,6 @@ public class MainActivity extends AppCompatActivity {
                     };
             spinnerDistance.setOnItemSelectedListener(previewListener);
             spinnerStyle.setOnItemSelectedListener(previewListener);
-            tvPreview.setText("➡ 25m Dorso");
 
             // Foto
             com.google.android.material.button.MaterialButton btnPhoto =
@@ -284,17 +417,16 @@ public class MainActivity extends AppCompatActivity {
             dialogPhotoPreview = dv.findViewById(R.id.ivPhotoPreview);
             dialogPhotoLabel   = dv.findViewById(R.id.tvPhotoLabel);
             btnPhoto.setOnClickListener(v -> {
-                if (androidx.core.content.ContextCompat.checkSelfPermission(this,
-                        android.Manifest.permission.CAMERA)
-                        == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                        == PackageManager.PERMISSION_GRANTED) {
                     launchCamera();
                 } else {
-                    requestCameraPermission.launch(android.Manifest.permission.CAMERA);
+                    requestCameraPermission.launch(Manifest.permission.CAMERA);
                 }
             });
 
             android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
-                    .setTitle("Salva Gara")
+                    .setTitle("💾 Salva Gara")
                     .setView(dv)
                     .setPositiveButton(R.string.save, (d, w) -> {
                         String athleteName = etName.getText() != null ?
@@ -339,31 +471,28 @@ public class MainActivity extends AppCompatActivity {
 
     private android.widget.ArrayAdapter<String> makeSpinnerAdapter(
             String[] items, int textColor, int bgColor) {
-        android.widget.ArrayAdapter<String> adapter =
-                new android.widget.ArrayAdapter<String>(this,
-                        android.R.layout.simple_spinner_item, items) {
-                    @Override
-                    public View getView(int pos, View convertView, android.view.ViewGroup parent) {
-                        android.widget.TextView tv =
-                                (android.widget.TextView) super.getView(pos, convertView, parent);
-                        tv.setTextColor(textColor);
-                        tv.setBackgroundColor(bgColor);
-                        return tv;
-                    }
-                    @Override
-                    public View getDropDownView(int pos, View convertView,
-                            android.view.ViewGroup parent) {
-                        android.widget.TextView tv =
-                                (android.widget.TextView) super.getDropDownView(
-                                        pos, convertView, parent);
-                        tv.setTextColor(textColor);
-                        tv.setBackgroundColor(bgColor);
-                        tv.setPadding(32, 24, 32, 24);
-                        return tv;
-                    }
-                };
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        return adapter;
+        return new android.widget.ArrayAdapter<String>(this,
+                android.R.layout.simple_spinner_item, items) {
+            @Override
+            public View getView(int pos, View convertView, android.view.ViewGroup parent) {
+                android.widget.TextView tv =
+                        (android.widget.TextView) super.getView(pos, convertView, parent);
+                tv.setTextColor(textColor);
+                tv.setBackgroundColor(bgColor);
+                return tv;
+            }
+            @Override
+            public View getDropDownView(int pos, View convertView,
+                    android.view.ViewGroup parent) {
+                android.widget.TextView tv =
+                        (android.widget.TextView) super.getDropDownView(
+                                pos, convertView, parent);
+                tv.setTextColor(textColor);
+                tv.setBackgroundColor(bgColor);
+                tv.setPadding(32, 24, 32, 24);
+                return tv;
+            }
+        };
     }
 
     private void launchCamera() {
@@ -380,10 +509,9 @@ public class MainActivity extends AppCompatActivity {
     private File createImageFile() throws IOException {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
                 .format(new Date());
-        String imageFileName = "SWIM_" + timeStamp;
         File storageDir = new File(getFilesDir(), "photos");
         if (!storageDir.exists()) storageDir.mkdirs();
-        File image = File.createTempFile(imageFileName, ".jpg", storageDir);
+        File image = File.createTempFile("SWIM_" + timeStamp, ".jpg", storageDir);
         currentPhotoPath = image.getAbsolutePath();
         return image;
     }
@@ -391,16 +519,22 @@ public class MainActivity extends AppCompatActivity {
     private void resetAll() {
         elapsedTime = 0; lastLapTime = 0; isRunning = false;
         currentPhotoPath = null;
+        currentRecordType = SessionStorage.RECORD_NONE;
+        setupDone = false;
+        pendingAthleteName = "";
+        pendingSpecialty = "";
         dialogPhotoPreview = null;
         dialogPhotoLabel = null;
         handler.removeCallbacks(timerRunnable);
         laps.clear();
         lapAdapter.notifyDataSetChanged();
+        lapAdapter.setRecordType(SessionStorage.RECORD_NONE);
         binding.tvTime.setText("00:00.00");
         binding.tvCurrentLap.setText(getString(R.string.current_lap) + " 00:00.00");
         binding.swimmerView.setRunning(false);
         binding.waveView.setRunning(false);
         updateUI();
+        updateSetupBar();
     }
 
     private void updateUI() {
