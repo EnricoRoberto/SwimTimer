@@ -17,6 +17,7 @@
         <item name="android:windowBackground">@color/pool_deep</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">#BBE0F0</item>
+        <item name="actionButtonStyle">@style/MyActionButton</item>
     </style>
 
     <style name="Theme.SwimTimer.Dark" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -44,5 +45,9 @@
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">#CE93D8</item>
     </style>
-
+    <style name="MyActionButton" parent="Widget.AppCompat.ActionButton">
+        <item name="android:minWidth">56dp</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:padding">12dp</item>
+    </style>
 </resources>
