@@ -66,10 +66,21 @@ public class SessionDetailActivity extends AppCompatActivity {
             tvNoLaps.setVisibility(View.VISIBLE);
             rv.setVisibility(View.GONE);
         } else {
-            tvNoLaps.setVisibility(View.GONE);
             rv.setVisibility(View.VISIBLE);
             rv.setLayoutManager(new LinearLayoutManager(this));
-            rv.setAdapter(new DetailLapAdapter(laps));
+            DetailLapAdapter detailAdapter = new DetailLapAdapter(laps);
+
+            // Controlla record per questa sessione
+            String specialty = SessionStorage.extractSpecialty(session.getName());
+            if (!specialty.isEmpty() && !laps.isEmpty()) {
+                long fastest = Long.MAX_VALUE;
+                for (Long l : laps) if (l < fastest) fastest = l;
+                int record = SessionStorage.checkRecord(
+                        this, specialty, fastest, session.getId());
+                detailAdapter.setRecordType(record);
+            }
+
+            rv.setAdapter(detailAdapter);
         }
 
         ((MaterialButton) findViewById(R.id.btnRename))
