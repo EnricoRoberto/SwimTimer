@@ -11,6 +11,12 @@ public class SessionStorage {
     private static final String PREFS = "swim_sessions";
     private static final String KEY_IDS = "session_ids";
 
+    // Risultato confronto record
+    public static final int RECORD_NONE        = 0; // nessun confronto possibile
+    public static final int RECORD_ABSOLUTE    = 1; // 🥇 record assoluto
+    public static final int RECORD_IMPROVED    = 2; // 📈 miglioramento rispetto all'ultima
+    public static final int RECORD_BOTH        = 3; // 🥇 + 📈 entrambi
+
     public static void saveSession(Context ctx, SessionData s) {
         SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         try {
@@ -48,6 +54,79 @@ public class SessionStorage {
     public static SessionData loadById(Context ctx, String id) {
         SharedPreferences prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
         return load(prefs, id);
+    }
+
+    /**
+     * Confronta la vasca più veloce della sessione corrente con la cronologia.
+     * Usa solo sessioni della stessa specialità (es. "100m Stile Libero").
+     * Ignora la sessione corrente (non ancora salvata).
+     *
+     * @param ctx         contesto
+     * @param specialty   specialità della sessione corrente (es. "100m Stile Libero")
+     * @param fastestLap  tempo della vasca più veloce della sessione corrente (ms)
+     * @param currentId   id della sessione corrente da escludere (null se non ancora salvata)
+     * @return RECORD_NONE / RECORD_ABSOLUTE / RECORD_IMPROVED / RECORD_BOTH
+     */
+    public static int checkRecord(Context ctx, String specialty,
+                                   long fastestLap, String currentId) {
+        if (specialty == null || specialty.isEmpty()) return RECORD_NONE;
+
+        List<SessionData> all = loadAll(ctx);
+
+        // Filtra solo sessioni della stessa specialità escludendo quella corrente
+        List<SessionData> sameSpecialty = new ArrayList<>();
+        for (SessionData s : all) {
+            if (currentId != null && s.getId().equals(currentId)) continue;
+            if (s.getName() != null && s.getName().contains(specialty)) {
+                sameSpecialty.add(s);
+            }
+        }
+
+        if (sameSpecialty.isEmpty()) return RECORD_NONE;
+
+        // Trova il record assoluto (vasca più veloce di sempre)
+        long absoluteBest = Long.MAX_VALUE;
+        // Trova il best dell'ultima sessione (la più recente per data)
+        long lastSessionBest = Long.MAX_VALUE;
+        SessionData lastSession = null;
+
+        for (SessionData s : sameSpecialty) {
+            // Best assoluto
+            if (s.getLaps() != null) {
+                for (Long lap : s.getLaps()) {
+                    if (lap > 0 && lap < absoluteBest) absoluteBest = lap;
+                }
+            }
+            // Ultima sessione per data
+            if (lastSession == null || s.getDate() > lastSession.getDate()) {
+                lastSession = s;
+            }
+        }
+
+        // Best dell'ultima sessione
+        if (lastSession != null && lastSession.getLaps() != null) {
+            for (Long lap : lastSession.getLaps()) {
+                if (lap > 0 && lap < lastSessionBest) lastSessionBest = lap;
+            }
+        }
+
+        boolean isAbsolute = absoluteBest != Long.MAX_VALUE && fastestLap < absoluteBest;
+        boolean isImproved = lastSessionBest != Long.MAX_VALUE && fastestLap < lastSessionBest;
+
+        if (isAbsolute && isImproved) return RECORD_BOTH;
+        if (isAbsolute) return RECORD_ABSOLUTE;
+        if (isImproved) return RECORD_IMPROVED;
+        return RECORD_NONE;
+    }
+
+    /**
+     * Estrae la specialità da un nome sessione tipo "Mario Rossi — 100m Stile Libero"
+     */
+    public static String extractSpecialty(String sessionName) {
+        if (sessionName == null) return "";
+        int sep = sessionName.indexOf(" — ");
+        if (sep >= 0) return sessionName.substring(sep + 3);
+        return sessionName; // il nome è già solo la specialità
     }
 
     private static SessionData load(SharedPreferences prefs, String id) {
