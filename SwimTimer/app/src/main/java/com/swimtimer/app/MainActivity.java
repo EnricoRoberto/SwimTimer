@@ -239,13 +239,37 @@ public class MainActivity extends AppCompatActivity {
             spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
             spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
 
+            // Aggiorna anteprima specialità e controlla record
             android.widget.AdapterView.OnItemSelectedListener previewListener =
                     new android.widget.AdapterView.OnItemSelectedListener() {
                         @Override public void onItemSelected(
                                 android.widget.AdapterView<?> p, View v, int pos, long id) {
-                            tvPreview.setText("➡ "
-                                    + distances[spinnerDistance.getSelectedItemPosition()]
-                                    + " " + styles[spinnerStyle.getSelectedItemPosition()]);
+                            String dist  = distances[spinnerDistance.getSelectedItemPosition()];
+                            String style = styles[spinnerStyle.getSelectedItemPosition()];
+                            String specialty = dist + " " + style;
+                            tvPreview.setText("➡ " + specialty);
+
+                            // Controlla record per questa specialità
+                            if (!laps.isEmpty()) {
+                                long fastest = Long.MAX_VALUE;
+                                for (Long l : laps) if (l < fastest) fastest = l;
+                                int record = SessionStorage.checkRecord(
+                                        MainActivity.this, specialty, fastest, null);
+                                switch (record) {
+                                    case SessionStorage.RECORD_ABSOLUTE:
+                                        tvPreview.setText("➡ " + specialty + "  🥇 Record assoluto!");
+                                        break;
+                                    case SessionStorage.RECORD_IMPROVED:
+                                        tvPreview.setText("➡ " + specialty + "  📈 Migliorato!");
+                                        break;
+                                    case SessionStorage.RECORD_BOTH:
+                                        tvPreview.setText("➡ " + specialty + "  🥇📈 Record + Migliorato!");
+                                        break;
+                                    default:
+                                        tvPreview.setText("➡ " + specialty);
+                                }
+                                lapAdapter.setRecordType(record);
+                            }
                         }
                         @Override public void onNothingSelected(
                                 android.widget.AdapterView<?> p) {}
