@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
             binding.rvLaps.setAdapter(lapAdapter);
             binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
             binding.btnLap.setOnClickListener(v -> { if (isRunning) { vibrate(); recordLap(); }});
-            binding.btnReset.setOnClickListener(v -> { vibrate(); Pressed(); });
+            binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
             updateUI();
         } catch (Exception e) {
             new AlertDialog.Builder(this)
