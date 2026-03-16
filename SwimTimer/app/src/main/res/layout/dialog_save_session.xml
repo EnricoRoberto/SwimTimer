@@ -1,89 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="24dp"
     android:background="#FFFFFF">
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="📝 Nome della gara"
-        android:textSize="15sp"
-        android:textColor="#212121"
-        android:textStyle="bold"
-        android:layout_marginBottom="12dp"/>
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="#FFFFFF">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/session_hint"
-        app:boxStrokeColor="#1565C0"
-        app:hintTextColor="#1565C0"
-        app:boxBackgroundColor="#F5F5F5"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/etSessionName"
+        <!-- Nome atleta -->
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textCapWords"
-            android:maxLines="1"
+            android:text="👤 Nome atleta"
+            android:textSize="15sp"
             android:textColor="#212121"
-            android:textColorHint="#757575"/>
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
 
-    </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Es. Mario Rossi"
+            app:boxStrokeColor="#1565C0"
+            app:hintTextColor="#1565C0"
+            app:boxBackgroundColor="#F5F5F5"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-    <!-- Separatore -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#E0E0E0"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="12dp"/>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etSessionName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textCapWords"
+                android:maxLines="1"
+                android:textColor="#212121"
+                android:textColorHint="#757575"/>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="📷 Foto ricordo (facoltativa)"
-        android:textSize="14sp"
-        android:textColor="#555555"
-        android:textStyle="bold"
-        android:layout_marginBottom="10dp"/>
+        </com.google.android.material.textfield.TextInputLayout>
 
-    <!-- Pulsante scatta foto -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnTakePhoto"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:text="📷  Scatta foto"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        app:backgroundTint="#1565C0"
-        app:cornerRadius="24dp"
-        style="@style/Widget.MaterialComponents.Button"/>
+        <!-- Separatore -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"/>
 
-    <!-- Etichetta stato foto -->
-    <TextView
-        android:id="@+id/tvPhotoLabel"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Nessuna foto scattata"
-        android:textSize="12sp"
-        android:textColor="#888888"
-        android:gravity="center"
-        android:layout_marginTop="6dp"/>
+        <!-- Specialità -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🏊 Specialità"
+            android:textSize="15sp"
+            android:textColor="#212121"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"/>
 
-    <!-- Anteprima foto -->
-    <ImageView
-        android:id="@+id/ivPhotoPreview"
-        android:layout_width="match_parent"
-        android:layout_height="140dp"
-        android:layout_marginTop="10dp"
-        android:scaleType="centerCrop"
-        android:visibility="gone"
-        android:background="#F0F0F0"/>
+        <!-- Spinner distanza -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Distanza"
+            android:textSize="13sp"
+            android:textColor="#555555"
+            android:layout_marginBottom="4dp"/>
 
-</LinearLayout>
+        <Spinner
+            android:id="@+id/spinnerDistance"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Spinner stile -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stile"
+            android:textSize="13sp"
+            android:textColor="#555555"
+            android:layout_marginBottom="4dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerStyle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginBottom="4dp"/>
+
+        <!-- Anteprima specialità selezionata -->
+        <TextView
+            android:id="@+id/tvSpecialtyPreview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="13sp"
+            android:textColor="#1565C0"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginTop="8dp"/>
+
+        <!-- Separatore -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="12dp"/>
+
+        <!-- Foto -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📷 Foto ricordo (facoltativa)"
+            android:textSize="14sp"
+            android:textColor="#555555"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTakePhoto"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="📷  Scatta foto"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            app:backgroundTint="#1565C0"
+            app:cornerRadius="24dp"
+            style="@style/Widget.MaterialComponents.Button"/>
+
+        <TextView
+            android:id="@+id/tvPhotoLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nessuna foto scattata"
+            android:textSize="12sp"
+            android:textColor="#888888"
+            android:gravity="center"
+            android:layout_marginTop="6dp"/>
+
+        <ImageView
+            android:id="@+id/ivPhotoPreview"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:layout_marginTop="10dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            android:background="#F0F0F0"/>
+
+    </LinearLayout>
+</ScrollView>
