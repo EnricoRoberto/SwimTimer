@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
             binding.rvLaps.setAdapter(lapAdapter);
             binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
             binding.btnLap.setOnClickListener(v -> { if (isRunning) { vibrate(); recordLap(); }});
-            binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
+            binding.btnReset.setOnClickListener(v -> { vibrate(); Pressed(); });
             updateUI();
         } catch (Exception e) {
             new AlertDialog.Builder(this)
@@ -160,11 +160,27 @@ public class MainActivity extends AppCompatActivity {
             updateUI();
         }
         if (elapsedTime > 0) {
+            // Controlla record prima di mostrare il dialog
+            checkAndShowRecord();
             currentPhotoPath = null;
             showSaveDialog();
         } else {
             resetAll();
         }
+    }
+
+    private void checkAndShowRecord() {
+        if (laps.isEmpty()) return;
+
+        // Trova vasca più veloce
+        long fastest = Long.MAX_VALUE;
+        for (Long l : laps) if (l < fastest) fastest = l;
+
+        // Recupera specialità dall'ultimo salvataggio pendente
+        // Non è ancora salvata quindi usiamo il campo pendingSpecialty
+        // che verrà impostato quando l'utente sceglie la specialità nel dialog
+        // Per ora mostriamo l'icona nel dialog di salvataggio — 
+        // il confronto vero avviene in showSaveDialog con la specialità scelta
     }
 
     private void showSaveDialog() {
