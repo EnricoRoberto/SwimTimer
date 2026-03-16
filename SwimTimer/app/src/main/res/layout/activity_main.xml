@@ -30,6 +30,19 @@
             app:titleTextColor="@android:color/white"
             app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
             app:contentInsetStartWithNavigation="0dp"/>
+        
+        <!-- Pulsante setup opzionale -->
+        <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnSetup"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="⚙  Imposta atleta e specialità"
+        android:textSize="13sp"
+        android:textColor="#212121"
+        android:textStyle="bold"
+        app:backgroundTint="#FFD600"
+        app:cornerRadius="0dp"
+        style="@style/Widget.MaterialComponents.Button"/>
 
     </com.google.android.material.appbar.AppBarLayout>
 
