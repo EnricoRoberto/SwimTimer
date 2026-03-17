@@ -143,7 +143,7 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
         TextView name, date, time, thumbPlaceholder, tvRecordBadge;
         ImageView thumb;
         ImageButton btnDelete;
-        CardView cardBorder;
+        View cardBorder;
 
         VH(View v) {
             super(v);
