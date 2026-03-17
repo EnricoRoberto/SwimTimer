@@ -18,7 +18,14 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
+            <!-- Deep link per import sessione -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="swimtimer" android:host="import"/>
+            </intent-filter>
+          </activity>
         <activity android:name=".HistoryActivity" android:exported="false"
             android:screenOrientation="portrait" android:parentActivityName=".MainActivity"/>
         <activity android:name=".SessionDetailActivity" android:exported="false"
