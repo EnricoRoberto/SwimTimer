@@ -9,7 +9,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.File;
@@ -147,14 +146,14 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
 
         VH(View v) {
             super(v);
-            name           = v.findViewById(R.id.tvSessionName);
-            date           = v.findViewById(R.id.tvSessionDate);
-            time           = v.findViewById(R.id.tvSessionTime);
-            thumb          = v.findViewById(R.id.ivThumb);
+            name             = v.findViewById(R.id.tvSessionName);
+            date             = v.findViewById(R.id.tvSessionDate);
+            time             = v.findViewById(R.id.tvSessionTime);
+            thumb            = v.findViewById(R.id.ivThumb);
             thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
-            btnDelete      = v.findViewById(R.id.btnDelete);
-            cardBorder     = v.findViewById(R.id.cardBorder);
-            tvRecordBadge  = v.findViewById(R.id.tvRecordBadge);
+            btnDelete        = v.findViewById(R.id.btnDelete);
+            cardBorder       = v.findViewById(R.id.cardBorder);
+            tvRecordBadge    = v.findViewById(R.id.tvRecordBadge);
         }
     }
 }
