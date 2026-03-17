@@ -241,6 +241,13 @@ public class SessionDetailActivity extends AppCompatActivity {
     }
 
     private void shareSession() {
+        // Costruisci JSON sessione da condividere
+        String sessionJson = buildSessionJson();
+        String encodedData = android.util.Base64.encodeToString(
+                sessionJson.getBytes(), android.util.Base64.URL_SAFE | android.util.Base64.NO_WRAP);
+        String deepLink = "swimtimer://import?data=" + encodedData;
+
+        // Testo leggibile
         StringBuilder sb = new StringBuilder();
         sb.append("🏊 ").append(session.getName()).append("\n");
         sb.append("📅 ").append(DateFormat.getDateTimeInstance()
@@ -263,7 +270,8 @@ public class SessionDetailActivity extends AppCompatActivity {
                         .append(MainActivity.formatTime(t)).append(tag).append("\n");
             }
         }
-        sb.append("\n📲 SwimTimer App");
+
+        sb.append("\n📲 Importa in SwimTimer:\n").append(deepLink);
 
         String photoPath = session.getPhotoPath();
         boolean hasPhoto = photoPath != null && !photoPath.isEmpty()
@@ -285,6 +293,22 @@ public class SessionDetailActivity extends AppCompatActivity {
         startActivity(Intent.createChooser(intent, getString(R.string.share_via)));
     }
 
+    private String buildSessionJson() {
+        try {
+            org.json.JSONObject obj = new org.json.JSONObject();
+            obj.put("name", session.getName());
+            obj.put("date", session.getDate());
+            obj.put("totalTime", session.getTotalTime());
+            org.json.JSONArray lapsArr = new org.json.JSONArray();
+            if (session.getLaps() != null) {
+                for (Long l : session.getLaps()) lapsArr.put(l);
+            }
+            obj.put("laps", lapsArr);
+            return obj.toString();
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) { finish(); return true; }
