@@ -1,99 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="6dp"
-    app:cardCornerRadius="16dp"
-    app:cardElevation="4dp"
-    app:cardBackgroundColor="@color/card_translucent">
+    android:layout_marginVertical="6dp">
 
-    <LinearLayout
+    <!-- Bordo dorato record (visibile solo per la sessione record) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardBorder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:cardCornerRadius="18dp"
+        app:cardElevation="0dp"
+        app:cardBackgroundColor="#FFD600"
+        android:visibility="gone"/>
+
+    <!-- Card principale -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardMain"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="14dp"
-        android:gravity="center_vertical">
+        android:layout_margin="3dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/card_translucent">
 
-        <!-- Miniatura foto (visibile solo se c'è la foto) -->
-        <ImageView
-            android:id="@+id/ivThumb"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_marginEnd="14dp"
-            android:scaleType="centerCrop"
-            android:visibility="gone"
-            android:background="#33FFFFFF"/>
-
-        <!-- Icona placeholder (visibile solo se NON c'è la foto) -->
-        <TextView
-            android:id="@+id/tvThumbPlaceholder"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:layout_marginEnd="14dp"
-            android:text="🏊"
-            android:textSize="28sp"
-            android:gravity="center"
-            android:background="#22FFFFFF"/>
-
-        <!-- Testi -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:padding="14dp"
+            android:gravity="center_vertical">
+
+            <!-- Miniatura foto o placeholder -->
+            <ImageView
+                android:id="@+id/ivThumb"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="14dp"
+                android:scaleType="centerCrop"
+                android:visibility="gone"
+                android:background="#33FFFFFF"/>
 
             <TextView
-                android:id="@+id/tvSessionName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/white"
-                android:maxLines="1"
-                android:ellipsize="end"/>
+                android:id="@+id/tvThumbPlaceholder"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="14dp"
+                android:text="🏊"
+                android:textSize="28sp"
+                android:gravity="center"
+                android:background="#22FFFFFF"/>
 
-            <TextView
-                android:id="@+id/tvSessionDate"
-                android:layout_width="match_parent"
+            <!-- Testi -->
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <!-- Badge record -->
+                <TextView
+                    android:id="@+id/tvRecordBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🏆 RECORD SPECIALITÀ"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="#FFD600"
+                    android:letterSpacing="0.05"
+                    android:visibility="gone"
+                    android:layout_marginBottom="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvSessionName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@android:color/white"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+                <TextView
+                    android:id="@+id/tvSessionDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:textColor="#88E0F0"
+                    android:layout_marginTop="2dp"/>
+
+                <TextView
+                    android:id="@+id/tvSessionTime"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:fontFamily="monospace"
+                    android:textStyle="bold"
+                    android:textColor="#FFD600"
+                    android:layout_marginTop="4dp"/>
+
+            </LinearLayout>
+
+            <!-- Cestino -->
+            <ImageButton
+                android:id="@+id/btnDelete"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_delete"
+                android:tint="#FF5252"
+                android:contentDescription="Elimina"/>
+
+            <!-- Freccia -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textSize="28sp"
                 android:textColor="#88E0F0"
-                android:layout_marginTop="2dp"/>
-
-            <TextView
-                android:id="@+id/tvSessionTime"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="18sp"
-                android:fontFamily="monospace"
-                android:textStyle="bold"
-                android:textColor="#FFD600"
-                android:layout_marginTop="4dp"/>
+                android:layout_marginStart="4dp"/>
 
         </LinearLayout>
-        <!-- Cestino -->
-        <ImageButton
-            android:id="@+id/btnDelete"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="4dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_delete"
-            android:tint="#FF5252"
-            android:contentDescription="Elimina"/>
-        
-        <!-- Freccia -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="›"
-            android:textSize="28sp"
-            android:textColor="#88E0F0"
-            android:layout_marginStart="8dp"/>
+    </androidx.cardview.widget.CardView>
 
-    </LinearLayout>
-
-</androidx.cardview.widget.CardView>
+</FrameLayout>
