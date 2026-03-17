@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwimTimer — Importa sessione</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0D3B5E;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .logo { font-size: 60px; margin-bottom: 16px; }
+        h1 { font-size: 24px; margin-bottom: 8px; text-align: center; }
+        .subtitle { color: #88E0F0; font-size: 14px; margin-bottom: 32px; text-align: center; }
+        .card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 24px;
+        }
+        .card p { margin: 8px 0; font-size: 15px; }
+        .btn {
+            display: block;
+            width: 100%;
+            max-width: 400px;
+            padding: 16px;
+            background: #1565C0;
+            color: white;
+            border: none;
+            border-radius: 32px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+        }
+        .btn:hover { background: #1976D2; }
+        .note { font-size: 12px; color: #88E0F0; text-align: center; margin-top: 16px; }
+        #status { text-align: center; color: #FFD600; font-size: 14px; margin-top: 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="logo">🏊</div>
+    <h1>SwimTimer</h1>
+    <p class="subtitle">Nuoto San Vito — Importa sessione</p>
+
+    <div class="card" id="sessionInfo">
+        <p>⏳ Caricamento dati sessione...</p>
+    </div>
+
+    <a class="btn" id="btnImport" href="#">
+        📥 Apri in SwimTimer
+    </a>
+
+    <p class="note">
+        Se l'app non si apre automaticamente,<br>
+        assicurati di avere SwimTimer installato.
+    </p>
+
+    <div id="status"></div>
+
+    <script>
+        // Leggi i parametri dall'URL
+        const params = new URLSearchParams(window.location.search);
+        const data = params.get('data');
+
+        if (data) {
+            try {
+                // Decodifica Base64 per mostrare anteprima
+                const json = atob(data.replace(/-/g, '+').replace(/_/g, '/'));
+                const session = JSON.parse(json);
+
+                // Mostra anteprima sessione
+                const info = document.getElementById('sessionInfo');
+                let html = '';
+                html += '<p>🏊 <strong>' + (session.name || 'Sessione') + '</strong></p>';
+
+                if (session.totalTime) {
+                    const ms = session.totalTime;
+                    const m = Math.floor(ms / 60000);
+                    const s = Math.floor((ms % 60000) / 1000);
+                    const c = Math.floor((ms % 1000) / 10);
+                    html += '<p>⏱ Tempo totale: <strong>'
+                        + String(m).padStart(2,'0') + ':'
+                        + String(s).padStart(2,'0') + '.'
+                        + String(c).padStart(2,'0') + '</strong></p>';
+                }
+
+                if (session.laps && session.laps.length > 0) {
+                    html += '<p>🏁 Vasche: <strong>' + session.laps.length + '</strong></p>';
+                }
+
+                if (session.date) {
+                    const d = new Date(session.date);
+                    html += '<p>📅 ' + d.toLocaleDateString('it-IT') + ' '
+                        + d.toLocaleTimeString('it-IT') + '</p>';
+                }
+
+                info.innerHTML = html;
+
+                // Costruisci deep link per aprire l'app
+                const deepLink = 'swimtimer://import?data=' + encodeURIComponent(data);
+                document.getElementById('btnImport').href = deepLink;
+
+                // Tenta apertura automatica dopo 1 secondo
+                setTimeout(() => {
+                    window.location.href = deepLink;
+                    // Se dopo 2 secondi siamo ancora qui, mostra messaggio
+                    setTimeout(() => {
+                        document.getElementById('status').textContent =
+                            '⬆ Premi il pulsante qui sopra per aprire SwimTimer';
+                    }, 2000);
+                }, 1000);
+
+            } catch(e) {
+                document.getElementById('sessionInfo').innerHTML =
+                    '<p>❌ Dati sessione non validi</p>';
+            }
+        } else {
+            document.getElementById('sessionInfo').innerHTML =
+                '<p>Nessun dato sessione trovato nel link.</p>';
+            document.getElementById('btnImport').style.display = 'none';
+        }
+    </script>
+
+</body>
+</html>
