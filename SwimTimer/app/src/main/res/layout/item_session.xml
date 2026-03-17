@@ -7,14 +7,12 @@
     android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="6dp">
 
-    <!-- Bordo dorato record (visibile solo per la sessione record) -->
-    <androidx.cardview.widget.CardView
+    <!-- Bordo dorato record -->
+    <View
         android:id="@+id/cardBorder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:cardCornerRadius="18dp"
-        app:cardElevation="0dp"
-        app:cardBackgroundColor="#FFD600"
+        android:background="@drawable/record_border"
         android:visibility="gone"/>
 
     <!-- Card principale -->
