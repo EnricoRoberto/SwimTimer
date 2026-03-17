@@ -49,7 +49,7 @@ public class HistoryActivity extends AppCompatActivity {
                         startActivity(intent);
                     },
                     (session, position) -> {
-                        new androidx.appcompat.app.AlertDialog.Builder(this)
+                        android.app.AlertDialog deleteDialog = new android.app.AlertDialog.Builder(this)
                             .setTitle("Elimina gara")
                             .setMessage("Eliminare \"" + session.getName() + "\"?")
                             .setPositiveButton("Elimina", (d, w) -> {
@@ -62,7 +62,29 @@ public class HistoryActivity extends AppCompatActivity {
                                 }
                             })
                             .setNegativeButton("Annulla", null)
-                            .show();
+                            .create();
+
+                    deleteDialog.show();
+
+                    if (deleteDialog.getWindow() != null)
+                        deleteDialog.getWindow().setBackgroundDrawable(
+                                new android.graphics.drawable.ColorDrawable(
+                                        android.graphics.Color.WHITE));
+
+                    deleteDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                            .setTextColor(android.graphics.Color.parseColor("#F44336"));
+                    deleteDialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                            .setTextColor(android.graphics.Color.parseColor("#757575"));
+
+                    android.widget.TextView msgView =
+                            deleteDialog.findViewById(android.R.id.message);
+                    if (msgView != null)
+                        msgView.setTextColor(android.graphics.Color.parseColor("#212121"));
+
+                    android.widget.TextView titleView =
+                            deleteDialog.findViewById(androidx.appcompat.R.id.alertTitle);
+                    if (titleView != null)
+                        titleView.setTextColor(android.graphics.Color.parseColor("#0D3B5E"));
                     });
                 binding.rvSessions.setLayoutManager(new LinearLayoutManager(this));
                 binding.rvSessions.setAdapter(adapter);
