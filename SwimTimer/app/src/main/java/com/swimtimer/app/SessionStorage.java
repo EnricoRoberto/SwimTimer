@@ -129,6 +129,26 @@ public class SessionStorage {
         return sessionName; // il nome è già solo la specialità
     }
 
+    /**
+     * Restituisce l'id della sessione con il tempo totale migliore
+     * per una data specialità. Usato per evidenziare il record nella cronologia.
+     */
+    public static String getBestSessionIdBySpecialty(Context ctx, String specialty) {
+        if (specialty == null || specialty.isEmpty()) return null;
+        List<SessionData> all = loadAll(ctx);
+        String bestId = null;
+        long bestTime = Long.MAX_VALUE;
+        for (SessionData s : all) {
+            String sp = extractSpecialty(s.getName());
+            if (sp.equals(specialty) && s.getTotalTime() > 0
+                    && s.getTotalTime() < bestTime) {
+                bestTime = s.getTotalTime();
+                bestId = s.getId();
+            }
+        }
+        return bestId;
+    }
+
     private static SessionData load(SharedPreferences prefs, String id) {
         try {
             String json = prefs.getString("session_" + id, null);
