@@ -7,17 +7,25 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
+
 import java.io.File;
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.VH> {
     private List<SessionData> sessions;
     private final OnSessionClickListener listener;
     private final OnSessionDeleteListener deleteListener;
+
+    // Cache dei record per specialità — specialty -> sessionId migliore
+    private final Map<String, String> recordMap = new HashMap<>();
 
     public interface OnSessionClickListener {
         void onSessionClick(SessionData s);
@@ -33,11 +41,28 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
         this.sessions = sessions;
         this.listener = l;
         this.deleteListener = dl;
+        buildRecordMap();
     }
 
     public void updateSessions(List<SessionData> newSessions) {
         this.sessions = newSessions;
+        buildRecordMap();
         notifyDataSetChanged();
+    }
+
+    /** Calcola per ogni specialità presente la sessione col tempo totale migliore */
+    private void buildRecordMap() {
+        recordMap.clear();
+        Map<String, Long> bestTimes = new HashMap<>();
+        for (SessionData s : sessions) {
+            String specialty = SessionStorage.extractSpecialty(s.getName());
+            if (specialty.isEmpty() || s.getTotalTime() <= 0) continue;
+            Long current = bestTimes.get(specialty);
+            if (current == null || s.getTotalTime() < current) {
+                bestTimes.put(specialty, s.getTotalTime());
+                recordMap.put(specialty, s.getId());
+            }
+        }
     }
 
     @NonNull @Override
@@ -65,26 +90,26 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
             h.thumbPlaceholder.setVisibility(View.VISIBLE);
         }
 
+        // Controlla se questa sessione è il record della sua specialità
+        String specialty = SessionStorage.extractSpecialty(s.getName());
+        String bestId = recordMap.get(specialty);
+        boolean isRecord = bestId != null && bestId.equals(s.getId());
+
+        if (isRecord) {
+            h.cardBorder.setVisibility(View.VISIBLE);
+            h.tvRecordBadge.setVisibility(View.VISIBLE);
+        } else {
+            h.cardBorder.setVisibility(View.GONE);
+            h.tvRecordBadge.setVisibility(View.GONE);
+        }
+
         h.itemView.setOnClickListener(v -> listener.onSessionClick(s));
-        h.btnDelete.setOnClickListener(v -> deleteListener.onSessionDelete(s, h.getAdapterPosition()));
+        h.btnDelete.setOnClickListener(v ->
+                deleteListener.onSessionDelete(s, h.getAdapterPosition()));
     }
 
     @Override public int getItemCount() { return sessions.size(); }
 
-    static class VH extends RecyclerView.ViewHolder {
-        TextView name, date, time, thumbPlaceholder;
-        ImageView thumb;
-        ImageButton btnDelete;
-        VH(View v) {
-            super(v);
-            name = v.findViewById(R.id.tvSessionName);
-            date = v.findViewById(R.id.tvSessionDate);
-            time = v.findViewById(R.id.tvSessionTime);
-            thumb = v.findViewById(R.id.ivThumb);
-            thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
-            btnDelete = v.findViewById(R.id.btnDelete);
-        }
-    }
     public static android.graphics.Bitmap loadCorrectlyOrientedBitmap(String path) {
         try {
             android.graphics.Bitmap bmp = BitmapFactory.decodeFile(path);
@@ -111,6 +136,25 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
             return bmp;
         } catch (Exception e) {
             return BitmapFactory.decodeFile(path);
+        }
+    }
+
+    static class VH extends RecyclerView.ViewHolder {
+        TextView name, date, time, thumbPlaceholder, tvRecordBadge;
+        ImageView thumb;
+        ImageButton btnDelete;
+        CardView cardBorder;
+
+        VH(View v) {
+            super(v);
+            name           = v.findViewById(R.id.tvSessionName);
+            date           = v.findViewById(R.id.tvSessionDate);
+            time           = v.findViewById(R.id.tvSessionTime);
+            thumb          = v.findViewById(R.id.ivThumb);
+            thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
+            btnDelete      = v.findViewById(R.id.btnDelete);
+            cardBorder     = v.findViewById(R.id.cardBorder);
+            tvRecordBadge  = v.findViewById(R.id.tvRecordBadge);
         }
     }
 }
