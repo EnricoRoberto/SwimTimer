@@ -168,7 +168,8 @@ public class MainActivity extends AppCompatActivity {
             SessionData imported = new SessionData(name, date, totalTime, laps);
 
             // Chiedi conferma prima di importare
-            new AlertDialog.Builder(this)
+        // Chiedi conferma prima di importare
+            android.app.AlertDialog confirmDialog = new android.app.AlertDialog.Builder(this)
                     .setTitle("📥 Importa sessione")
                     .setMessage("Vuoi importare la sessione:\n\n"
                             + "🏊 " + name + "\n"
@@ -180,7 +181,29 @@ public class MainActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     })
                     .setNegativeButton("Annulla", null)
-                    .show();
+                    .create();
+
+            confirmDialog.show();
+
+            if (confirmDialog.getWindow() != null)
+                confirmDialog.getWindow().setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(
+                                android.graphics.Color.WHITE));
+
+            confirmDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                    .setTextColor(android.graphics.Color.parseColor("#1565C0"));
+            confirmDialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                    .setTextColor(android.graphics.Color.parseColor("#757575"));
+
+            android.widget.TextView messageView =
+                    confirmDialog.findViewById(android.R.id.message);
+            if (messageView != null)
+                messageView.setTextColor(android.graphics.Color.parseColor("#212121"));
+
+            android.widget.TextView titleView =
+                    confirmDialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null)
+                titleView.setTextColor(android.graphics.Color.parseColor("#0D3B5E"));
 
         } catch (Exception e) {
             Toast.makeText(this, "Errore nel link di importazione",
