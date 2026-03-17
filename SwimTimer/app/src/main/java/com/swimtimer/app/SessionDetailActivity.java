@@ -245,7 +245,7 @@ public class SessionDetailActivity extends AppCompatActivity {
         String sessionJson = buildSessionJson();
         String encodedData = android.util.Base64.encodeToString(
                 sessionJson.getBytes(), android.util.Base64.URL_SAFE | android.util.Base64.NO_WRAP);
-        String deepLink = "swimtimer://import?data=" + encodedData;
+        String deepLink = "https://enricoroberto.github.io/SwimTimer/import?data=" + encodedData;
 
         // Testo leggibile
         StringBuilder sb = new StringBuilder();
