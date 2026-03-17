@@ -124,7 +124,8 @@ public class MainActivity extends AppCompatActivity {
 
             // Pulsante setup opzionale
             binding.btnSetup.setOnClickListener(v -> showSetupDialog());
-
+            // Gestisci deep link import sessione
+            handleImportIntent(getIntent());
             updateUI();
             updateSetupBar();
         } catch (Exception e) {
