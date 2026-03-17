@@ -135,7 +135,59 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("OK", null).show();
         }
     }
+@Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleImportIntent(intent);
+    }
 
+    private void handleImportIntent(Intent intent) {
+        if (intent == null) return;
+        android.net.Uri uri = intent.getData();
+        if (uri == null || !"swimtimer".equals(uri.getScheme())) return;
+        if (!"import".equals(uri.getHost())) return;
+
+        String encodedData = uri.getQueryParameter("data");
+        if (encodedData == null || encodedData.isEmpty()) return;
+
+        try {
+            byte[] decoded = android.util.Base64.decode(
+                    encodedData, android.util.Base64.URL_SAFE);
+            String json = new String(decoded);
+            org.json.JSONObject obj = new org.json.JSONObject(json);
+
+            String name      = obj.getString("name");
+            long date        = obj.getLong("date");
+            long totalTime   = obj.getLong("totalTime");
+            java.util.List<Long> laps = new ArrayList<>();
+            org.json.JSONArray lapsArr = obj.getJSONArray("laps");
+            for (int i = 0; i < lapsArr.length(); i++) {
+                laps.add(lapsArr.getLong(i));
+            }
+
+            SessionData imported = new SessionData(name, date, totalTime, laps);
+
+            // Chiedi conferma prima di importare
+            new AlertDialog.Builder(this)
+                    .setTitle("📥 Importa sessione")
+                    .setMessage("Vuoi importare la sessione:\n\n"
+                            + "🏊 " + name + "\n"
+                            + "⏱ " + formatTime(totalTime) + "\n"
+                            + "🏁 " + laps.size() + " vasche")
+                    .setPositiveButton("Importa", (d, w) -> {
+                        SessionStorage.saveSession(this, imported);
+                        Toast.makeText(this, "✅ Sessione importata!",
+                                Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Annulla", null)
+                    .show();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Errore nel link di importazione",
+                    Toast.LENGTH_SHORT).show();
+            android.util.Log.e("SWIMCRASH", "Import error: " + e);
+        }
+    }
     /** Aggiorna il pulsante setup in base allo stato */
     private void updateSetupBar() {
         if (setupDone) {
