@@ -26,6 +26,7 @@ public class SessionStorage {
             obj.put("date", s.getDate());
             obj.put("totalTime", s.getTotalTime());
             obj.put("photoPath", s.getPhotoPath() != null ? s.getPhotoPath() : "");
+            obj.put("imported", s.isImported());
             JSONArray lapsArr = new JSONArray();
             for (Long l : s.getLaps()) lapsArr.put(l);
             obj.put("laps", lapsArr);
@@ -162,6 +163,7 @@ public class SessionStorage {
                     obj.getLong("totalTime"), laps);
             String photo = obj.optString("photoPath", "");
             if (!photo.isEmpty()) s.setPhotoPath(photo);
+            s.setImported(obj.optBoolean("imported", false));
             return s;
         } catch (Exception e) { return null; }
     }
