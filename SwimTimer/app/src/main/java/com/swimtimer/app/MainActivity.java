@@ -165,7 +165,8 @@ public class MainActivity extends AppCompatActivity {
                 laps.add(lapsArr.getLong(i));
             }
 
-        SessionData imported = new SessionData(name, date, totalTime, laps);
+            SessionData imported = new SessionData(name, date, totalTime, laps);
+            imported.setImported(true);
 
             // Chiedi conferma prima di importare
         // Chiedi conferma prima di importare
