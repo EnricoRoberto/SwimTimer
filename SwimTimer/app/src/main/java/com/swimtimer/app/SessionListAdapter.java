@@ -1,6 +1,7 @@
 package com.swimtimer.app;
 
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,8 +23,6 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
     private List<SessionData> sessions;
     private final OnSessionClickListener listener;
     private final OnSessionDeleteListener deleteListener;
-
-    // Cache dei record per specialità — specialty -> sessionId migliore
     private final Map<String, String> recordMap = new HashMap<>();
 
     public interface OnSessionClickListener {
@@ -49,7 +48,6 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
         notifyDataSetChanged();
     }
 
-    /** Calcola per ogni specialità presente la sessione col tempo totale migliore */
     private void buildRecordMap() {
         recordMap.clear();
         Map<String, Long> bestTimes = new HashMap<>();
@@ -89,11 +87,19 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
             h.thumbPlaceholder.setVisibility(View.VISIBLE);
         }
 
-        // Controlla se questa sessione è il record della sua specialità
+        // Badge importata
+        if (s.isImported()) {
+            h.tvImportedBadge.setVisibility(View.VISIBLE);
+            h.tvImportedBadge.setBackgroundColor(Color.parseColor("#FFD600"));
+            h.tvImportedBadge.setTextColor(Color.parseColor("#212121"));
+        } else {
+            h.tvImportedBadge.setVisibility(View.GONE);
+        }
+
+        // Badge record
         String specialty = SessionStorage.extractSpecialty(s.getName());
         String bestId = recordMap.get(specialty);
         boolean isRecord = bestId != null && bestId.equals(s.getId());
-
         if (isRecord) {
             h.cardBorder.setVisibility(View.VISIBLE);
             h.tvRecordBadge.setVisibility(View.VISIBLE);
@@ -139,21 +145,4 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
     }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView name, date, time, thumbPlaceholder, tvRecordBadge;
-        ImageView thumb;
-        ImageButton btnDelete;
-        View cardBorder;
-
-        VH(View v) {
-            super(v);
-            name             = v.findViewById(R.id.tvSessionName);
-            date             = v.findViewById(R.id.tvSessionDate);
-            time             = v.findViewById(R.id.tvSessionTime);
-            thumb            = v.findViewById(R.id.ivThumb);
-            thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
-            btnDelete        = v.findViewById(R.id.btnDelete);
-            cardBorder       = v.findViewById(R.id.cardBorder);
-            tvRecordBadge    = v.findViewById(R.id.tvRecordBadge);
-        }
-    }
-}
+        TextView name, d
