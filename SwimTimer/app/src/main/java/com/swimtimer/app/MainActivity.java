@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     // Soglia volume bassa per captare a distanza
     private static final double VOLUME_THRESHOLD = 800.0;
     // Durata minima rilevamento (ms)
-    private static final long DETECTION_DURATION = 400;
+    private static final long DETECTION_DURATION = 200;
 
     private final ActivityResultLauncher<Uri> takePictureLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
