@@ -145,4 +145,22 @@ public class SessionListAdapter extends RecyclerView.Adapter<SessionListAdapter.
     }
 
     static class VH extends RecyclerView.ViewHolder {
-        TextView name, d
+        TextView name, date, time, thumbPlaceholder, tvRecordBadge, tvImportedBadge;
+        ImageView thumb;
+        ImageButton btnDelete;
+        View cardBorder;
+
+        VH(View v) {
+            super(v);
+            name             = v.findViewById(R.id.tvSessionName);
+            date             = v.findViewById(R.id.tvSessionDate);
+            time             = v.findViewById(R.id.tvSessionTime);
+            thumb            = v.findViewById(R.id.ivThumb);
+            thumbPlaceholder = v.findViewById(R.id.tvThumbPlaceholder);
+            btnDelete        = v.findViewById(R.id.btnDelete);
+            cardBorder       = v.findViewById(R.id.cardBorder);
+            tvRecordBadge    = v.findViewById(R.id.tvRecordBadge);
+            tvImportedBadge  = v.findViewById(R.id.tvImportedBadge);
+        }
+    }
+}
