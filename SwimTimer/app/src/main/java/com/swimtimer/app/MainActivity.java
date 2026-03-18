@@ -75,10 +75,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int BUFFER_SIZE      = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
     // Frequenze sirena gara nuoto — suono grave 80-500 Hz
-    private static final double FREQ_MIN      = 80.0;
-    private static final double FREQ_MAX      = 500.0;
+    private static final double FREQ_MIN      = 750.0;
+    private static final double FREQ_MAX      = 1050.0;
     // Soglia volume bassa per captare a distanza
-    private static final double VOLUME_THRESHOLD = 800.0;
+    private static final double VOLUME_THRESHOLD = 300.0;
     // Durata minima rilevamento (ms)
     private static final long DETECTION_DURATION = 200;
 
