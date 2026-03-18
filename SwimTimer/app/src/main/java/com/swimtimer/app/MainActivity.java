@@ -4,6 +4,9 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,9 +15,9 @@ import android.os.Vibrator;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -60,6 +63,25 @@ public class MainActivity extends AppCompatActivity {
     private ImageView dialogPhotoPreview = null;
     private TextView dialogPhotoLabel   = null;
 
+    // Microfono / riconoscimento sirena
+    private AudioRecord audioRecord;
+    private boolean isListening = false;
+    private Thread listenThread;
+
+    // Parametri rilevamento sirena
+    private static final int SAMPLE_RATE      = 44100;
+    private static final int CHANNEL_CONFIG   = AudioFormat.CHANNEL_IN_MONO;
+    private static final int AUDIO_FORMAT     = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int BUFFER_SIZE      = AudioRecord.getMinBufferSize(
+            SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
+    // Frequenze sirena gara nuoto — suono grave 80-500 Hz
+    private static final double FREQ_MIN      = 80.0;
+    private static final double FREQ_MAX      = 500.0;
+    // Soglia volume bassa per captare a distanza
+    private static final double VOLUME_THRESHOLD = 800.0;
+    // Durata minima rilevamento (ms)
+    private static final long DETECTION_DURATION = 400;
+
     private final ActivityResultLauncher<Uri> takePictureLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
                 if (success && currentPhotoPath != null) {
@@ -83,6 +105,13 @@ public class MainActivity extends AppCompatActivity {
                         Toast.LENGTH_SHORT).show();
             });
 
+    private final ActivityResultLauncher<String> requestMicPermission =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) startListening();
+                else Toast.makeText(this, "Permesso microfono negato",
+                        Toast.LENGTH_SHORT).show();
+            });
+
     private final Runnable timerRunnable = new Runnable() {
         @Override public void run() {
             long total = elapsedTime + (System.currentTimeMillis() - startTime);
@@ -90,6 +119,20 @@ public class MainActivity extends AppCompatActivity {
             binding.tvCurrentLap.setText(getString(R.string.current_lap)
                     + " " + formatTime(total - lastLapTime));
             handler.postDelayed(this, 10);
+        }
+    };
+
+    // Lampeggio pulsante microfono
+    private final Runnable blinkRunnable = new Runnable() {
+        private boolean state = false;
+        @Override public void run() {
+            if (!isListening) return;
+            state = !state;
+            binding.btnAutoStart.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(
+                            state ? Color.parseColor("#F44336")
+                                  : Color.parseColor("#546E7A")));
+            handler.postDelayed(this, 500);
         }
     };
 
@@ -121,10 +164,9 @@ public class MainActivity extends AppCompatActivity {
                 if (isRunning) { vibrate(); recordLap(); }
             });
             binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
-
-            // Pulsante setup opzionale
             binding.btnSetup.setOnClickListener(v -> showSetupDialog());
-            // Gestisci deep link import sessione
+            binding.btnAutoStart.setOnClickListener(v -> { vibrate(); toggleListening(); });
+
             handleImportIntent(getIntent());
             updateUI();
             updateSetupBar();
@@ -135,84 +177,213 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("OK", null).show();
         }
     }
-@Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        handleImportIntent(intent);
-    }
 
-    private void handleImportIntent(Intent intent) {
-        if (intent == null) return;
-        android.net.Uri uri = intent.getData();
-        if (uri == null || !"swimtimer".equals(uri.getScheme())) return;
-        if (!"import".equals(uri.getHost())) return;
+    // ── MICROFONO ──────────────────────────────────────────────────────────────
 
-        String encodedData = uri.getQueryParameter("data");
-        if (encodedData == null || encodedData.isEmpty()) return;
-
-        try {
-            byte[] decoded = android.util.Base64.decode(
-                    encodedData, android.util.Base64.URL_SAFE);
-            String json = new String(decoded);
-            org.json.JSONObject obj = new org.json.JSONObject(json);
-
-            String name      = obj.getString("name");
-            long date        = obj.getLong("date");
-            long totalTime   = obj.getLong("totalTime");
-            java.util.List<Long> laps = new ArrayList<>();
-            org.json.JSONArray lapsArr = obj.getJSONArray("laps");
-            for (int i = 0; i < lapsArr.length(); i++) {
-                laps.add(lapsArr.getLong(i));
+    private void toggleListening() {
+        if (isRunning) {
+            Toast.makeText(this, "Ferma il cronometro prima", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (isListening) {
+            stopListening();
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                    == PackageManager.PERMISSION_GRANTED) {
+                startListening();
+            } else {
+                requestMicPermission.launch(Manifest.permission.RECORD_AUDIO);
             }
-
-            SessionData imported = new SessionData(name, date, totalTime, laps);
-            imported.setImported(true);
-
-            // Chiedi conferma prima di importare
-        // Chiedi conferma prima di importare
-            android.app.AlertDialog confirmDialog = new android.app.AlertDialog.Builder(this)
-                    .setTitle("📥 Importa sessione")
-                    .setMessage("Vuoi importare la sessione:\n\n"
-                            + "🏊 " + name + "\n"
-                            + "⏱ " + formatTime(totalTime) + "\n"
-                            + "🏁 " + laps.size() + " vasche")
-                    .setPositiveButton("Importa", (d, w) -> {
-                        SessionStorage.saveSession(this, imported);
-                        Toast.makeText(this, "✅ Sessione importata!",
-                                Toast.LENGTH_SHORT).show();
-                    })
-                    .setNegativeButton("Annulla", null)
-                    .create();
-
-            confirmDialog.show();
-
-            if (confirmDialog.getWindow() != null)
-                confirmDialog.getWindow().setBackgroundDrawable(
-                        new android.graphics.drawable.ColorDrawable(
-                                android.graphics.Color.WHITE));
-
-            confirmDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
-                    .setTextColor(android.graphics.Color.parseColor("#1565C0"));
-            confirmDialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
-                    .setTextColor(android.graphics.Color.parseColor("#757575"));
-
-            android.widget.TextView messageView =
-                    confirmDialog.findViewById(android.R.id.message);
-            if (messageView != null)
-                messageView.setTextColor(android.graphics.Color.parseColor("#212121"));
-
-            android.widget.TextView titleView =
-                    confirmDialog.findViewById(androidx.appcompat.R.id.alertTitle);
-            if (titleView != null)
-                titleView.setTextColor(android.graphics.Color.parseColor("#0D3B5E"));
-
-        } catch (Exception e) {
-            Toast.makeText(this, "Errore nel link di importazione",
-                    Toast.LENGTH_SHORT).show();
-            android.util.Log.e("SWIMCRASH", "Import error: " + e);
         }
     }
-    /** Aggiorna il pulsante setup in base allo stato */
+
+    private void startListening() {
+        if (isListening) return;
+        try {
+            audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+                    SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT, BUFFER_SIZE);
+            audioRecord.startRecording();
+            isListening = true;
+            updateAutoStartButton();
+            handler.post(blinkRunnable);
+            Toast.makeText(this, "🎤 In ascolto sirena...", Toast.LENGTH_SHORT).show();
+
+            listenThread = new Thread(() -> {
+                short[] buffer = new short[BUFFER_SIZE / 2];
+                long sirenStartTime = -1;
+
+                while (isListening) {
+                    int read = audioRecord.read(buffer, 0, buffer.length);
+                    if (read <= 0) continue;
+
+                    // Calcola volume RMS
+                    double rms = 0;
+                    for (int i = 0; i < read; i++) rms += buffer[i] * buffer[i];
+                    rms = Math.sqrt(rms / read);
+
+                    if (rms < VOLUME_THRESHOLD) {
+                        sirenStartTime = -1;
+                        continue;
+                    }
+
+                    // Analisi FFT per verificare frequenza dominante
+                    double dominantFreq = getDominantFrequency(buffer, read);
+                    boolean isInSirenRange = dominantFreq >= FREQ_MIN
+                            && dominantFreq <= FREQ_MAX;
+
+                    if (isInSirenRange) {
+                        if (sirenStartTime == -1) {
+                            sirenStartTime = System.currentTimeMillis();
+                        } else if (System.currentTimeMillis() - sirenStartTime
+                                >= DETECTION_DURATION) {
+                            // Sirena rilevata!
+                            runOnUiThread(() -> {
+                                stopListening();
+                                startTimerFromSiren();
+                            });
+                            break;
+                        }
+                    } else {
+                        sirenStartTime = -1;
+                    }
+                }
+            });
+            listenThread.start();
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Errore microfono: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
+            isListening = false;
+            updateAutoStartButton();
+        }
+    }
+
+    private void stopListening() {
+        isListening = false;
+        handler.removeCallbacks(blinkRunnable);
+        if (audioRecord != null) {
+            try {
+                audioRecord.stop();
+                audioRecord.release();
+            } catch (Exception ignored) {}
+            audioRecord = null;
+        }
+        updateAutoStartButton();
+    }
+
+    private void startTimerFromSiren() {
+        if (isRunning) return;
+        vibrate();
+        Toast.makeText(this, "🚨 Sirena rilevata — partenza!", Toast.LENGTH_SHORT).show();
+        startTime = System.currentTimeMillis();
+        isRunning = true;
+        handler.post(timerRunnable);
+        binding.swimmerView.setRunning(true);
+        binding.waveView.setRunning(true);
+        updateUI();
+        updateSetupBar();
+    }
+
+    /** FFT semplificata per trovare la frequenza dominante */
+    private double getDominantFrequency(short[] buffer, int length) {
+        // Usa un campione ridotto per efficienza
+        int n = Math.min(length, 2048);
+        double[] real = new double[n];
+        double[] imag = new double[n];
+
+        // Applica finestra di Hanning
+        for (int i = 0; i < n; i++) {
+            double window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)));
+            real[i] = buffer[i] * window;
+            imag[i] = 0;
+        }
+
+        // FFT iterativa (Cooley-Tukey)
+        fft(real, imag, n);
+
+        // Trova il bin con ampiezza massima (escludi DC)
+        int maxBin = 1;
+        double maxAmp = 0;
+        for (int i = 1; i < n / 2; i++) {
+            double amp = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
+            if (amp > maxAmp) {
+                maxAmp = amp;
+                maxBin = i;
+            }
+        }
+
+        return (double) maxBin * SAMPLE_RATE / n;
+    }
+
+    /** FFT di Cooley-Tukey — opera su potenze di 2 */
+    private void fft(double[] re, double[] im, int n) {
+        // Bit reversal
+        for (int i = 1, j = 0; i < n; i++) {
+            int bit = n >> 1;
+            for (; (j & bit) != 0; bit >>= 1) j ^= bit;
+            j ^= bit;
+            if (i < j) {
+                double t = re[i]; re[i] = re[j]; re[j] = t;
+                t = im[i]; im[i] = im[j]; im[j] = t;
+            }
+        }
+        // FFT
+        for (int len = 2; len <= n; len <<= 1) {
+            double ang = -2 * Math.PI / len;
+            double wRe = Math.cos(ang), wIm = Math.sin(ang);
+            for (int i = 0; i < n; i += len) {
+                double curRe = 1, curIm = 0;
+                for (int j = 0; j < len / 2; j++) {
+                    double uRe = re[i+j], uIm = im[i+j];
+                    double vRe = re[i+j+len/2]*curRe - im[i+j+len/2]*curIm;
+                    double vIm = re[i+j+len/2]*curIm + im[i+j+len/2]*curRe;
+                    re[i+j] = uRe+vRe; im[i+j] = uIm+vIm;
+                    re[i+j+len/2] = uRe-vRe; im[i+j+len/2] = uIm-vIm;
+                    double newRe = curRe*wRe - curIm*wIm;
+                    curIm = curRe*wIm + curIm*wRe;
+                    curRe = newRe;
+                }
+            }
+        }
+    }
+
+    private void updateAutoStartButton() {
+        runOnUiThread(() -> {
+            if (isListening) {
+                binding.btnAutoStart.setText("⏹");
+                binding.btnAutoStart.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(
+                                Color.parseColor("#F44336")));
+            } else {
+                binding.btnAutoStart.setText("🎤");
+                binding.btnAutoStart.setBackgroundTintList(
+                        android.content.res.ColorStateList.valueOf(
+                                Color.parseColor("#546E7A")));
+            }
+        });
+    }
+
+    // ── TIMER ──────────────────────────────────────────────────────────────────
+
+    private void toggleTimer() {
+        if (isRunning) {
+            elapsedTime += System.currentTimeMillis() - startTime;
+            isRunning = false;
+            handler.removeCallbacks(timerRunnable);
+            binding.swimmerView.setRunning(false);
+            binding.waveView.setRunning(false);
+        } else {
+            if (isListening) stopListening();
+            startTime = System.currentTimeMillis();
+            isRunning = true;
+            handler.post(timerRunnable);
+            binding.swimmerView.setRunning(true);
+            binding.waveView.setRunning(true);
+        }
+        updateUI();
+        updateSetupBar();
+    }
+
     private void updateSetupBar() {
         if (setupDone) {
             String label = pendingAthleteName.isEmpty() ?
@@ -230,11 +401,9 @@ public class MainActivity extends AppCompatActivity {
                             Color.parseColor("#FFD600")));
             binding.btnSetup.setTextColor(Color.parseColor("#212121"));
         }
-        // Nascondi il pulsante durante il cronometraggio
         binding.btnSetup.setVisibility(isRunning ? View.GONE : View.VISIBLE);
     }
 
-    /** Dialog setup opzionale — non blocca, chiamabile in qualsiasi momento */
     private void showSetupDialog() {
         boolean isDark    = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
         int bgColor       = isDark ? Color.parseColor("#1A2A3A") : Color.WHITE;
@@ -245,8 +414,6 @@ public class MainActivity extends AppCompatActivity {
 
         View dv = getLayoutInflater().inflate(R.layout.dialog_save_session, null);
         dv.findViewById(R.id.dialogContainer).setBackgroundColor(bgColor);
-
-        // Nascondi sezione foto
         dv.findViewById(R.id.labelPhoto).setVisibility(View.GONE);
         dv.findViewById(R.id.btnTakePhoto).setVisibility(View.GONE);
         dv.findViewById(R.id.tvPhotoLabel).setVisibility(View.GONE);
@@ -279,7 +446,6 @@ public class MainActivity extends AppCompatActivity {
         spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
         spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
 
-        // Preseleziona ultima specialità
         if (!pendingSpecialty.isEmpty()) {
             for (int i = 0; i < distances.length; i++) {
                 if (pendingSpecialty.startsWith(distances[i])) {
@@ -319,10 +485,7 @@ public class MainActivity extends AppCompatActivity {
                             + " " + styles[spinnerStyle.getSelectedItemPosition()];
                     setupDone = true;
                     updateSetupBar();
-                    // Se il cronometro sta girando aggiorna subito i record
-                    if (isRunning && !laps.isEmpty()) {
-                        updateRecordBadge();
-                    }
+                    if (isRunning && !laps.isEmpty()) updateRecordBadge();
                 })
                 .setNegativeButton("Annulla", null)
                 .create();
@@ -337,24 +500,6 @@ public class MainActivity extends AppCompatActivity {
                     new android.graphics.drawable.ColorDrawable(bgColor));
     }
 
-    private void toggleTimer() {
-        if (isRunning) {
-            elapsedTime += System.currentTimeMillis() - startTime;
-            isRunning = false;
-            handler.removeCallbacks(timerRunnable);
-            binding.swimmerView.setRunning(false);
-            binding.waveView.setRunning(false);
-        } else {
-            startTime = System.currentTimeMillis();
-            isRunning = true;
-            handler.post(timerRunnable);
-            binding.swimmerView.setRunning(true);
-            binding.waveView.setRunning(true);
-        }
-        updateUI();
-        updateSetupBar();
-    }
-
     private void recordLap() {
         long total = elapsedTime + (System.currentTimeMillis() - startTime);
         long lapTime = total - lastLapTime;
@@ -363,12 +508,9 @@ public class MainActivity extends AppCompatActivity {
         lapAdapter.notifyItemInserted(0);
         binding.rvLaps.scrollToPosition(0);
         binding.swimmerView.doTumble();
-
-        // Aggiorna icona record in tempo reale solo se setup fatto
         if (setupDone) updateRecordBadge();
     }
 
-    /** Ricalcola e aggiorna l'icona record sulla vasca più veloce */
     private void updateRecordBadge() {
         if (laps.isEmpty() || !setupDone) return;
         long fastest = Long.MAX_VALUE;
@@ -420,7 +562,6 @@ public class MainActivity extends AppCompatActivity {
             etName.setTextColor(textPrimary);
             etName.setHintTextColor(textSecondary);
 
-            // Precompila con setup se fatto
             if (!pendingAthleteName.isEmpty()) {
                 etName.setText(pendingAthleteName);
                 etName.setSelection(pendingAthleteName.length());
@@ -438,7 +579,6 @@ public class MainActivity extends AppCompatActivity {
             spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
             spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
 
-            // Preseleziona specialità da setup
             if (!pendingSpecialty.isEmpty()) {
                 for (int i = 0; i < distances.length; i++) {
                     if (pendingSpecialty.startsWith(distances[i])) {
@@ -488,7 +628,6 @@ public class MainActivity extends AppCompatActivity {
             spinnerDistance.setOnItemSelectedListener(previewListener);
             spinnerStyle.setOnItemSelectedListener(previewListener);
 
-            // Foto
             com.google.android.material.button.MaterialButton btnPhoto =
                     dv.findViewById(R.id.btnTakePhoto);
             dialogPhotoPreview = dv.findViewById(R.id.ivPhotoPreview);
@@ -620,11 +759,13 @@ public class MainActivity extends AppCompatActivity {
             binding.btnStartStop.setIconResource(R.drawable.ic_stop);
             binding.btnLap.setEnabled(true);
             binding.btnReset.setEnabled(false);
+            binding.btnAutoStart.setEnabled(false);
         } else {
             binding.btnStartStop.setText(R.string.start);
             binding.btnStartStop.setIconResource(R.drawable.ic_play);
             binding.btnLap.setEnabled(false);
             binding.btnReset.setEnabled(elapsedTime > 0);
+            binding.btnAutoStart.setEnabled(true);
         }
         if (themeManager.getCurrentTheme() == ThemeManager.THEME_MULTICOLOR) {
             binding.btnStartStop.setBackgroundTintList(
@@ -676,8 +817,74 @@ public class MainActivity extends AppCompatActivity {
                 }).show();
     }
 
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleImportIntent(intent);
+    }
+
+    private void handleImportIntent(Intent intent) {
+        if (intent == null) return;
+        android.net.Uri uri = intent.getData();
+        if (uri == null || !"swimtimer".equals(uri.getScheme())) return;
+        if (!"import".equals(uri.getHost())) return;
+        String encodedData = uri.getQueryParameter("data");
+        if (encodedData == null || encodedData.isEmpty()) return;
+        try {
+            byte[] decoded = android.util.Base64.decode(
+                    encodedData, android.util.Base64.URL_SAFE);
+            String json = new String(decoded);
+            org.json.JSONObject obj = new org.json.JSONObject(json);
+            String name      = obj.getString("name");
+            long date        = obj.getLong("date");
+            long totalTime   = obj.getLong("totalTime");
+            List<Long> laps  = new ArrayList<>();
+            org.json.JSONArray lapsArr = obj.getJSONArray("laps");
+            for (int i = 0; i < lapsArr.length(); i++) laps.add(lapsArr.getLong(i));
+            SessionData imported = new SessionData(name, date, totalTime, laps);
+            imported.setImported(true);
+
+            android.app.AlertDialog confirmDialog = new android.app.AlertDialog.Builder(this)
+                    .setTitle("📥 Importa sessione")
+                    .setMessage("Vuoi importare la sessione:\n\n"
+                            + "🏊 " + name + "\n"
+                            + "⏱ " + formatTime(totalTime) + "\n"
+                            + "🏁 " + laps.size() + " vasche")
+                    .setPositiveButton("Importa", (d, w) -> {
+                        SessionStorage.saveSession(this, imported);
+                        Toast.makeText(this, "✅ Sessione importata!",
+                                Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Annulla", null)
+                    .create();
+
+            confirmDialog.show();
+            if (confirmDialog.getWindow() != null)
+                confirmDialog.getWindow().setBackgroundDrawable(
+                        new android.graphics.drawable.ColorDrawable(Color.WHITE));
+            confirmDialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                    .setTextColor(Color.parseColor("#1565C0"));
+            confirmDialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                    .setTextColor(Color.parseColor("#757575"));
+            android.widget.TextView messageView =
+                    confirmDialog.findViewById(android.R.id.message);
+            if (messageView != null)
+                messageView.setTextColor(Color.parseColor("#212121"));
+            android.widget.TextView titleView =
+                    confirmDialog.findViewById(androidx.appcompat.R.id.alertTitle);
+            if (titleView != null)
+                titleView.setTextColor(Color.parseColor("#0D3B5E"));
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Errore nel link di importazione",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacks(timerRunnable);
+        handler.removeCallbacks(blinkRunnable);
+        stopListening();
     }
 }
