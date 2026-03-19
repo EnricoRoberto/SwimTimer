@@ -75,12 +75,16 @@ public class MainActivity extends AppCompatActivity {
     private static final int BUFFER_SIZE      = AudioRecord.getMinBufferSize(
             SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
     // Frequenze sirena gara nuoto — suono grave 80-500 Hz
-    private static final double FREQ_MIN      = 750.0;
-    private static final double FREQ_MAX      = 1050.0;
-    // Soglia volume bassa per captare a distanza
-    private static final double VOLUME_THRESHOLD = 300.0;
-    // Durata minima rilevamento (ms)
-    private static final long DETECTION_DURATION = 200;
+   // Parametri sirena — modificabili dal pannello calibrazione
+    private double freqMin           = 750.0;
+    private double freqMax           = 1050.0;
+    private double volumeThreshold   = 300.0;
+    private long detectionDuration   = 200;
+
+    // Chiavi SharedPreferences
+    private static final String PREFS_SIREN  = "siren_settings";
+    private static final String KEY_DISTANCE = "distance";
+    private static final String KEY_SENSITIVITY = "sensitivity";
 
     private final ActivityResultLauncher<Uri> takePictureLauncher =
             registerForActivityResult(new ActivityResultContracts.TakePicture(), success -> {
@@ -148,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
         });
         try {
             themeManager = ThemeManager.getInstance(this);
+            loadSirenSettings();
             themeManager.applyTheme(this);
             super.onCreate(savedInstanceState);
             binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -166,6 +171,11 @@ public class MainActivity extends AppCompatActivity {
             binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
             binding.btnSetup.setOnClickListener(v -> showSetupDialog());
             binding.btnAutoStart.setOnClickListener(v -> { vibrate(); toggleListening(); });
+            binding.btnAutoStart.setOnLongClickListener(v -> {
+                vibrate();
+                showSirenCalibrationDialog();
+                return true;
+            });
 
             handleImportIntent(getIntent());
             updateUI();
@@ -179,7 +189,157 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // ── MICROFONO ──────────────────────────────────────────────────────────────
+private void loadSirenSettings() {
+        android.content.SharedPreferences prefs =
+                getSharedPreferences(PREFS_SIREN, MODE_PRIVATE);
+        int distance    = prefs.getInt(KEY_DISTANCE, 1);    // 0=vicino, 1=medio, 2=lontano
+        int sensitivity = prefs.getInt(KEY_SENSITIVITY, 1); // 0=bassa, 1=media, 2=alta
+        applySirenSettings(distance, sensitivity);
+    }
 
+    private void applySirenSettings(int distance, int sensitivity) {
+        // Frequenza centrale 900Hz — il range cambia con la distanza
+        // (il riverbero allarga lo spettro percepito)
+        switch (distance) {
+            case 0: // Vicino 1-3m — range stretto
+                freqMin = 820.0; freqMax = 980.0;
+                detectionDuration = 150;
+                break;
+            case 2: // Lontano >10m — range largo per riverbero
+                freqMin = 650.0; freqMax = 1150.0;
+                detectionDuration = 180;
+                break;
+            default: // Medio 3-10m
+                freqMin = 750.0; freqMax = 1050.0;
+                detectionDuration = 200;
+        }
+
+        // Sensibilità — soglia volume
+        switch (sensitivity) {
+            case 0: // Bassa — meno falsi positivi
+                volumeThreshold = 600.0; break;
+            case 2: // Alta — cattura anche suoni deboli
+                volumeThreshold = 150.0; break;
+            default: // Media
+                volumeThreshold = 300.0;
+        }
+
+        android.util.Log.d("SIREN",
+                "Freq: " + freqMin + "-" + freqMax
+                + " Vol: " + volumeThreshold
+                + " Dur: " + detectionDuration);
+    }
+
+    private void showSirenCalibrationDialog() {
+        boolean isDark    = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
+        int bgColor       = isDark ? Color.parseColor("#1A2A3A") : Color.WHITE;
+        int textPrimary   = isDark ? Color.WHITE : Color.parseColor("#212121");
+        int textSecondary = isDark ? Color.parseColor("#AACCE0") : Color.parseColor("#555555");
+
+        android.content.SharedPreferences prefs =
+                getSharedPreferences(PREFS_SIREN, MODE_PRIVATE);
+        int currentDistance    = prefs.getInt(KEY_DISTANCE, 1);
+        int currentSensitivity = prefs.getInt(KEY_SENSITIVITY, 1);
+
+        // Layout dialog
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setBackgroundColor(bgColor);
+        int pad = (int)(20 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad, pad, pad, pad);
+
+        // Label distanza
+        android.widget.TextView lblDist = new android.widget.TextView(this);
+        lblDist.setText("📍 Distanza dalla sirena");
+        lblDist.setTextColor(textPrimary);
+        lblDist.setTextSize(14);
+        lblDist.setTypeface(null, android.graphics.Typeface.BOLD);
+        lblDist.setPadding(0, 0, 0, 8);
+        layout.addView(lblDist);
+
+        // Radio distanza
+        android.widget.RadioGroup rgDistance = new android.widget.RadioGroup(this);
+        rgDistance.setOrientation(android.widget.RadioGroup.VERTICAL);
+        String[] distLabels = {"🏊 Vicino (1-3 metri)", "🏊 Medio (3-10 metri)", "🏊 Lontano (oltre 10 metri)"};
+        for (int i = 0; i < distLabels.length; i++) {
+            android.widget.RadioButton rb = new android.widget.RadioButton(this);
+            rb.setText(distLabels[i]);
+            rb.setTextColor(textPrimary);
+            rb.setId(i);
+            if (i == currentDistance) rb.setChecked(true);
+            rgDistance.addView(rb);
+        }
+        layout.addView(rgDistance);
+
+        // Separatore
+        android.widget.TextView sep = new android.widget.TextView(this);
+        sep.setPadding(0, 16, 0, 8);
+        layout.addView(sep);
+
+        // Label sensibilità
+        android.widget.TextView lblSens = new android.widget.TextView(this);
+        lblSens.setText("🎚️ Sensibilità microfono");
+        lblSens.setTextColor(textPrimary);
+        lblSens.setTextSize(14);
+        lblSens.setTypeface(null, android.graphics.Typeface.BOLD);
+        lblSens.setPadding(0, 0, 0, 8);
+        layout.addView(lblSens);
+
+        // Radio sensibilità
+        android.widget.RadioGroup rgSensitivity = new android.widget.RadioGroup(this);
+        rgSensitivity.setOrientation(android.widget.RadioGroup.VERTICAL);
+        String[] sensLabels = {
+            "🔇 Bassa — meno falsi positivi",
+            "🔉 Media — bilanciata (default)",
+            "🔊 Alta — cattura suoni deboli"
+        };
+        for (int i = 0; i < sensLabels.length; i++) {
+            android.widget.RadioButton rb = new android.widget.RadioButton(this);
+            rb.setText(sensLabels[i]);
+            rb.setTextColor(textPrimary);
+            rb.setId(100 + i);
+            if (i == currentSensitivity) rb.setChecked(true);
+            rgSensitivity.addView(rb);
+        }
+        layout.addView(rgSensitivity);
+
+        // Nota informativa
+        android.widget.TextView note = new android.widget.TextView(this);
+        note.setText("\nℹ️ Frequenza sirena: 900Hz\nDurata minima rilevamento: adattiva");
+        note.setTextColor(textSecondary);
+        note.setTextSize(11);
+        layout.addView(note);
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(this)
+                .setTitle("🎤 Calibrazione sirena")
+                .setView(layout)
+                .setPositiveButton("Salva", (d, w) -> {
+                    int selDist = rgDistance.getCheckedRadioButtonId();
+                    int selSens = rgSensitivity.getCheckedRadioButtonId() - 100;
+                    if (selDist < 0) selDist = 1;
+                    if (selSens < 0) selSens = 1;
+                    // Salva preferenze
+                    getSharedPreferences(PREFS_SIREN, MODE_PRIVATE).edit()
+                            .putInt(KEY_DISTANCE, selDist)
+                            .putInt(KEY_SENSITIVITY, selSens)
+                            .apply();
+                    // Applica subito
+                    applySirenSettings(selDist, selSens);
+                    Toast.makeText(this, "✅ Impostazioni salvate", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Annulla", null)
+                .create();
+
+        dialog.show();
+        dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)
+                .setTextColor(Color.parseColor("#1565C0"));
+        dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)
+                .setTextColor(Color.parseColor("#757575"));
+        if (dialog.getWindow() != null)
+            dialog.getWindow().setBackgroundDrawable(
+                    new android.graphics.drawable.ColorDrawable(bgColor));
+    }
+    
     private void toggleListening() {
         if (isRunning) {
             Toast.makeText(this, "Ferma il cronometro prima", Toast.LENGTH_SHORT).show();
@@ -221,21 +381,21 @@ public class MainActivity extends AppCompatActivity {
                     for (int i = 0; i < read; i++) rms += buffer[i] * buffer[i];
                     rms = Math.sqrt(rms / read);
 
-                    if (rms < VOLUME_THRESHOLD) {
+                    if (rms < volumeThreshold) {
                         sirenStartTime = -1;
                         continue;
                     }
 
                     // Analisi FFT per verificare frequenza dominante
                     double dominantFreq = getDominantFrequency(buffer, read);
-                    boolean isInSirenRange = dominantFreq >= FREQ_MIN
-                            && dominantFreq <= FREQ_MAX;
+                    boolean isInSirenRange = dominantFreq >= freqMin
+                            && dominantFreq <= freqMax;
 
                     if (isInSirenRange) {
                         if (sirenStartTime == -1) {
                             sirenStartTime = System.currentTimeMillis();
-                        } else if (System.currentTimeMillis() - sirenStartTime
-                                >= DETECTION_DURATION) {
+                       } else if (System.currentTimeMillis() - sirenStartTime
+                                >= detectionDuration) {
                             // Sirena rilevata!
                             runOnUiThread(() -> {
                                 stopListening();
