@@ -111,6 +111,8 @@ public class SessionDetailActivity extends AppCompatActivity {
 
         // Dividers
         dv.findViewById(R.id.divider1).setBackgroundColor(dividerColor);
+        dv.findViewById(R.id.labelPoolLength).setVisibility(View.GONE);
+        dv.findViewById(R.id.spinnerPoolLength).setVisibility(View.GONE);
 
         // Nascondi sezione foto
         dv.findViewById(R.id.labelPhoto).setVisibility(View.GONE);
