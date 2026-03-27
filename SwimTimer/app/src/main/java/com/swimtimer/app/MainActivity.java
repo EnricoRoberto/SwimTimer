@@ -55,6 +55,9 @@ public class MainActivity extends AppCompatActivity {
     private String pendingAthleteName = "";
     private String pendingSpecialty   = "";
     private boolean setupDone         = false;
+    private int pendingPoolLength  = 25;  // lunghezza vasca (25 o 50 metri)
+    private int totalLaps          = 0;   // vasche totali da fare
+    private int currentLapCount    = 0;   // vasche già cronometrate
     private int currentRecordType     = SessionStorage.RECORD_NONE;
 
     // Foto
@@ -452,6 +455,7 @@ private void applySirenSettings(int distance, int sensitivity) {
         binding.waveView.setRunning(true);
         updateUI();
         updateSetupBar();
+        updateLapCounter();
     }
 
     /** FFT semplificata per trovare la frequenza dominante */
@@ -552,6 +556,7 @@ private void applySirenSettings(int distance, int sensitivity) {
         }
         updateUI();
         updateSetupBar();
+        updateLapCounter();
     }
 
     private void updateSetupBar() {
@@ -608,13 +613,21 @@ private void applySirenSettings(int distance, int sensitivity) {
         android.widget.TextView tvPreview = dv.findViewById(R.id.tvSpecialtyPreview);
         tvPreview.setTextColor(previewColor);
 
-        android.widget.Spinner spinnerDistance = dv.findViewById(R.id.spinnerDistance);
-        android.widget.Spinner spinnerStyle    = dv.findViewById(R.id.spinnerStyle);
-        final String[] distances = {"25m", "50m", "100m", "200m"};
-        final String[] styles    = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
+        android.widget.Spinner spinnerDistance  = dv.findViewById(R.id.spinnerDistance);
+        android.widget.Spinner spinnerPoolLength = dv.findViewById(R.id.spinnerPoolLength);
+        android.widget.Spinner spinnerStyle     = dv.findViewById(R.id.spinnerStyle);
+        ((TextView) dv.findViewById(R.id.labelPoolLength)).setTextColor(textSecondary);
+        final String[] distances   = {"25m", "50m", "100m", "200m"};
+        final int[]    poolLengths = {25, 50};
+        final String[] poolLabels  = {"25 metri", "50 metri"};
+        final String[] styles      = {"Dorso", "Farfalla", "Rana", "Stile Libero", "Misti"};
 
         spinnerDistance.setAdapter(makeSpinnerAdapter(distances, textPrimary, bgColor));
+        spinnerPoolLength.setAdapter(makeSpinnerAdapter(poolLabels, textPrimary, bgColor));
         spinnerStyle.setAdapter(makeSpinnerAdapter(styles, textPrimary, bgColor));
+
+        // Preseleziona lunghezza vasca corrente
+        spinnerPoolLength.setSelection(pendingPoolLength == 50 ? 1 : 0);
 
         if (!pendingSpecialty.isEmpty()) {
             for (int i = 0; i < distances.length; i++) {
@@ -653,8 +666,14 @@ private void applySirenSettings(int distance, int sensitivity) {
                             etName.getText().toString().trim() : "";
                     pendingSpecialty = distances[spinnerDistance.getSelectedItemPosition()]
                             + " " + styles[spinnerStyle.getSelectedItemPosition()];
+                    pendingPoolLength = poolLengths[spinnerPoolLength.getSelectedItemPosition()];
+                    int distMeters = Integer.parseInt(
+                            distances[spinnerDistance.getSelectedItemPosition()].replace("m",""));
+                    totalLaps = distMeters / pendingPoolLength;
+                    currentLapCount = 0;
                     setupDone = true;
                     updateSetupBar();
+                    updateLapCounter();
                     if (isRunning && !laps.isEmpty()) updateRecordBadge();
                 })
                 .setNegativeButton("Annulla", null)
@@ -679,6 +698,10 @@ private void applySirenSettings(int distance, int sensitivity) {
         binding.rvLaps.scrollToPosition(0);
         binding.swimmerView.doTumble();
         if (setupDone) updateRecordBadge();
+        if (totalLaps > 0) {
+            currentLapCount = Math.min(currentLapCount + 1, totalLaps);
+            updateLapCounter();
+        }
     }
 
     private void updateRecordBadge() {
@@ -690,6 +713,15 @@ private void applySirenSettings(int distance, int sensitivity) {
         lapAdapter.setRecordType(currentRecordType);
     }
 
+    private void updateLapCounter() {
+        if (!isRunning || !setupDone || totalLaps <= 0) {
+            binding.tvLapCounter.setVisibility(View.GONE);
+            return;
+        }
+        binding.tvLapCounter.setText(currentLapCount + "/" + totalLaps);
+        binding.tvLapCounter.setVisibility(View.VISIBLE);
+    }
+    
     private void onResetPressed() {
         if (isRunning) {
             elapsedTime += System.currentTimeMillis() - startTime;
@@ -726,6 +758,8 @@ private void applySirenSettings(int distance, int sensitivity) {
             ((TextView) dv.findViewById(R.id.labelStyle)).setTextColor(textSecondary);
             dv.findViewById(R.id.divider1).setBackgroundColor(dividerColor);
             dv.findViewById(R.id.divider2).setBackgroundColor(dividerColor);
+            dv.findViewById(R.id.labelPoolLength).setVisibility(View.GONE);
+            dv.findViewById(R.id.spinnerPoolLength).setVisibility(View.GONE);
 
             com.google.android.material.textfield.TextInputEditText etName =
                     dv.findViewById(R.id.etSessionName);
@@ -909,6 +943,9 @@ private void applySirenSettings(int distance, int sensitivity) {
         setupDone = false;
         pendingAthleteName = "";
         pendingSpecialty = "";
+        currentLapCount = 0;
+        totalLaps = 0;
+        binding.tvLapCounter.setVisibility(View.GONE);
         dialogPhotoPreview = null;
         dialogPhotoLabel = null;
         handler.removeCallbacks(timerRunnable);
