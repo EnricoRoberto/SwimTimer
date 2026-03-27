@@ -76,10 +76,11 @@ public class MainActivity extends AppCompatActivity {
             SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
 
     // Parametri sirena — calibrati su analisi audio reale
-    private double freqMin            = 970.0;
-    private double freqMax            = 1070.0;
-    private double volumeThreshold    = 250.0;
-    private long detectionDuration    = 80;
+    private double freqMin                     = 970.0;
+    private double freqMax                     = 1070.0;
+    private double volumeThreshold             = 250.0;
+    private double relativeEnergyThreshold     = 0.22;
+    private long detectionDuration             = 80;
 
     // Chiavi SharedPreferences
     private static final String PREFS_SIREN     = "siren_settings";
