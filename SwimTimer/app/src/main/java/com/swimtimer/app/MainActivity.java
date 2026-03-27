@@ -68,18 +68,17 @@ public class MainActivity extends AppCompatActivity {
     private boolean isListening = false;
     private Thread listenThread;
 
-    // Parametri rilevamento sirena
-    private static final int SAMPLE_RATE      = 44100;
-    private static final int CHANNEL_CONFIG   = AudioFormat.CHANNEL_IN_MONO;
-    private static final int AUDIO_FORMAT     = AudioFormat.ENCODING_PCM_16BIT;
-    private static final int BUFFER_SIZE      = AudioRecord.getMinBufferSize(
-            SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
-    // Frequenze sirena gara nuoto — suono grave 80-500 Hz
-   // Parametri sirena — modificabili dal pannello calibrazione
-    private double freqMin           = 750.0;
-    private double freqMax           = 1050.0;
-    private double volumeThreshold   = 300.0;
-    private long detectionDuration   = 200;
+// Parametri sirena — calibrati su analisi audio reale
+    private double freqMin           = 950.0;   // Frequenza principale sirena ~1013Hz
+    private double freqMax           = 1080.0;
+    private double freqMin2          = 560.0;   // Frequenza secondaria ~607Hz
+    private double freqMax2          = 660.0;
+    private double volumeThreshold   = 200.0;   // Soglia bassa — filtro per frequenza
+    private long detectionDuration   = 150;     // 150ms sufficienti
+
+    private static final String PREFS_SIREN    = "siren_settings";
+    private static final String KEY_DISTANCE   = "distance";
+    private static final String KEY_SENSITIVITY = "sensitivity";
 
     // Chiavi SharedPreferences
     private static final String PREFS_SIREN  = "siren_settings";
@@ -197,37 +196,34 @@ private void loadSirenSettings() {
         applySirenSettings(distance, sensitivity);
     }
 
-    private void applySirenSettings(int distance, int sensitivity) {
-        // Frequenza centrale 900Hz — il range cambia con la distanza
-        // (il riverbero allarga lo spettro percepito)
+private void applySirenSettings(int distance, int sensitivity) {
+        // Frequenze calibrate su analisi audio reale
+        // Sirena principale ~1013Hz, secondaria ~607Hz
         switch (distance) {
-            case 0: // Vicino 1-3m — range stretto
-                freqMin = 820.0; freqMax = 980.0;
+            case 0: // Vicino — range stretto, segnale forte
+                freqMin = 980.0;  freqMax = 1050.0;
+                freqMin2 = 580.0; freqMax2 = 640.0;
+                detectionDuration = 120;
+                break;
+            case 2: // Lontano — range largo per riverbero
+                freqMin = 900.0;  freqMax = 1120.0;
+                freqMin2 = 530.0; freqMax2 = 690.0;
                 detectionDuration = 150;
                 break;
-            case 2: // Lontano >10m — range largo per riverbero
-                freqMin = 650.0; freqMax = 1150.0;
-                detectionDuration = 180;
-                break;
-            default: // Medio 3-10m
-                freqMin = 750.0; freqMax = 1050.0;
-                detectionDuration = 200;
+            default: // Medio
+                freqMin = 950.0;  freqMax = 1080.0;
+                freqMin2 = 560.0; freqMax2 = 660.0;
+                detectionDuration = 150;
         }
 
-        // Sensibilità — soglia volume
         switch (sensitivity) {
             case 0: // Bassa — meno falsi positivi
-                volumeThreshold = 600.0; break;
-            case 2: // Alta — cattura anche suoni deboli
-                volumeThreshold = 150.0; break;
+                volumeThreshold = 400.0; break;
+            case 2: // Alta — cattura suoni deboli
+                volumeThreshold = 100.0; break;
             default: // Media
-                volumeThreshold = 300.0;
+                volumeThreshold = 200.0;
         }
-
-        android.util.Log.d("SIREN",
-                "Freq: " + freqMin + "-" + freqMax
-                + " Vol: " + volumeThreshold
-                + " Dur: " + detectionDuration);
     }
 
     private void showSirenCalibrationDialog() {
@@ -369,46 +365,57 @@ private void loadSirenSettings() {
             Toast.makeText(this, "🎤 In ascolto sirena...", Toast.LENGTH_SHORT).show();
 
             listenThread = new Thread(() -> {
-                short[] buffer = new short[BUFFER_SIZE / 2];
-                long sirenStartTime = -1;
+            short[] buffer = new short[BUFFER_SIZE / 2];
+            long sirenStartTime = -1;
+            int consecutiveHits = 0;
 
-                while (isListening) {
-                    int read = audioRecord.read(buffer, 0, buffer.length);
-                    if (read <= 0) continue;
+            while (isListening) {
+                int read = audioRecord.read(buffer, 0, buffer.length);
+                if (read <= 0) continue;
 
-                    // Calcola volume RMS
-                    double rms = 0;
-                    for (int i = 0; i < read; i++) rms += buffer[i] * buffer[i];
-                    rms = Math.sqrt(rms / read);
+                // Calcola volume RMS
+                double rms = 0;
+                for (int i = 0; i < read; i++) rms += buffer[i] * buffer[i];
+                rms = Math.sqrt(rms / read);
 
-                    if (rms < volumeThreshold) {
-                        sirenStartTime = -1;
-                        continue;
-                    }
-
-                    // Analisi FFT per verificare frequenza dominante
-                    double dominantFreq = getDominantFrequency(buffer, read);
-                    boolean isInSirenRange = dominantFreq >= freqMin
-                            && dominantFreq <= freqMax;
-
-                    if (isInSirenRange) {
-                        if (sirenStartTime == -1) {
-                            sirenStartTime = System.currentTimeMillis();
-                       } else if (System.currentTimeMillis() - sirenStartTime
-                                >= detectionDuration) {
-                            // Sirena rilevata!
-                            runOnUiThread(() -> {
-                                stopListening();
-                                startTimerFromSiren();
-                            });
-                            break;
-                        }
-                    } else {
-                        sirenStartTime = -1;
-                    }
+                // Filtra silenzio assoluto
+                if (rms < volumeThreshold) {
+                    sirenStartTime = -1;
+                    consecutiveHits = 0;
+                    continue;
                 }
-            });
-            listenThread.start();
+
+                // Analisi FFT per frequenza dominante
+                double dominantFreq = getDominantFrequency(buffer, read);
+
+                // Verifica se la frequenza è nella banda della sirena
+                // (frequenza principale OPPURE frequenza secondaria)
+                boolean isMainFreq  = dominantFreq >= freqMin && dominantFreq <= freqMax;
+                boolean isSecondFreq = dominantFreq >= freqMin2 && dominantFreq <= freqMax2;
+                boolean isInSirenRange = isMainFreq || isSecondFreq;
+
+                if (isInSirenRange) {
+                    consecutiveHits++;
+                    if (sirenStartTime == -1) {
+                        sirenStartTime = System.currentTimeMillis();
+                    }
+                    // Richiede almeno 3 rilevamenti consecutivi E durata minima
+                    if (consecutiveHits >= 3 &&
+                            System.currentTimeMillis() - sirenStartTime >= detectionDuration) {
+                        runOnUiThread(() -> {
+                            stopListening();
+                            startTimerFromSiren();
+                        });
+                        break;
+                    }
+                } else {
+                    // Reset se il suono non è più nella banda sirena
+                    consecutiveHits = 0;
+                    sirenStartTime = -1;
+                }
+            }
+        });
+        listenThread.start();
 
         } catch (Exception e) {
             Toast.makeText(this, "Errore microfono: " + e.getMessage(),
