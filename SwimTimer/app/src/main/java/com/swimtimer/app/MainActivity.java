@@ -68,21 +68,24 @@ public class MainActivity extends AppCompatActivity {
     private boolean isListening = false;
     private Thread listenThread;
 
-// Parametri sirena — calibrati su analisi audio reale
-    private double freqMin           = 950.0;   // Frequenza principale sirena ~1013Hz
-    private double freqMax           = 1080.0;
-    private double freqMin2          = 560.0;   // Frequenza secondaria ~607Hz
-    private double freqMax2          = 660.0;
-    private double volumeThreshold   = 200.0;   // Soglia bassa — filtro per frequenza
-    private long detectionDuration   = 150;     // 150ms sufficienti
+// Parametri audio microfono
+    private static final int SAMPLE_RATE      = 44100;
+    private static final int CHANNEL_CONFIG   = AudioFormat.CHANNEL_IN_MONO;
+    private static final int AUDIO_FORMAT     = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int BUFFER_SIZE      = AudioRecord.getMinBufferSize(
+            SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
 
-    private static final String PREFS_SIREN    = "siren_settings";
-    private static final String KEY_DISTANCE   = "distance";
-    private static final String KEY_SENSITIVITY = "sensitivity";
+    // Parametri sirena — calibrati su analisi audio reale
+    private double freqMin            = 950.0;
+    private double freqMax            = 1080.0;
+    private double freqMin2           = 560.0;
+    private double freqMax2           = 660.0;
+    private double volumeThreshold    = 200.0;
+    private long detectionDuration    = 150;
 
     // Chiavi SharedPreferences
-    private static final String PREFS_SIREN  = "siren_settings";
-    private static final String KEY_DISTANCE = "distance";
+    private static final String PREFS_SIREN     = "siren_settings";
+    private static final String KEY_DISTANCE    = "distance";
     private static final String KEY_SENSITIVITY = "sensitivity";
 
     private final ActivityResultLauncher<Uri> takePictureLauncher =
