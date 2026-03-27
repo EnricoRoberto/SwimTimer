@@ -405,9 +405,10 @@ private void applySirenSettings(int distance, int sensitivity) {
                     // Richiede almeno 3 rilevamenti consecutivi E durata minima
                     if (consecutiveHits >= 3 &&
                             System.currentTimeMillis() - sirenStartTime >= detectionDuration) {
+                        final long sirenStart = sirenStartTime;
                         runOnUiThread(() -> {
                             stopListening();
-                            startTimerFromSiren();
+                            startTimerFromSiren(sirenStart);
                         });
                         break;
                     }
@@ -441,11 +442,15 @@ private void applySirenSettings(int distance, int sensitivity) {
         updateAutoStartButton();
     }
 
-    private void startTimerFromSiren() {
+    private void startTimerFromSiren(long sirenDetectedAt) {
         if (isRunning) return;
         vibrate();
-        Toast.makeText(this, "🚨 Sirena rilevata — partenza!", Toast.LENGTH_SHORT).show();
-        startTime = System.currentTimeMillis();
+        // Calcola il ritardo di rilevamento e compensalo
+        long detectionDelay = System.currentTimeMillis() - sirenDetectedAt;
+        Toast.makeText(this, "🚨 Sirena rilevata! (compensato +"
+                + detectionDelay + "ms)", Toast.LENGTH_SHORT).show();
+        // Fa partire il cronometro da sirenDetectedAt invece che da ora
+        startTime = sirenDetectedAt;
         isRunning = true;
         handler.post(timerRunnable);
         binding.swimmerView.setRunning(true);
