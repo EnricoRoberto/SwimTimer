@@ -76,12 +76,10 @@ public class MainActivity extends AppCompatActivity {
             SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) * 4;
 
     // Parametri sirena — calibrati su analisi audio reale
-    private double freqMin            = 950.0;
-    private double freqMax            = 1080.0;
-    private double freqMin2           = 560.0;
-    private double freqMax2           = 660.0;
-    private double volumeThreshold    = 200.0;
-    private long detectionDuration    = 150;
+    private double freqMin            = 970.0;
+    private double freqMax            = 1070.0;
+    private double volumeThreshold    = 250.0;
+    private long detectionDuration    = 80;
 
     // Chiavi SharedPreferences
     private static final String PREFS_SIREN     = "siren_settings";
@@ -200,34 +198,35 @@ private void loadSirenSettings() {
     }
 
 private void applySirenSettings(int distance, int sensitivity) {
-        // Frequenze calibrate su analisi audio reale
-        // Sirena principale ~1013Hz, secondaria ~607Hz
-        switch (distance) {
-            case 0: // Vicino — range stretto, segnale forte
-                freqMin = 980.0;  freqMax = 1050.0;
-                freqMin2 = 580.0; freqMax2 = 640.0;
-                detectionDuration = 120;
-                break;
-            case 2: // Lontano — range largo per riverbero
-                freqMin = 900.0;  freqMax = 1120.0;
-                freqMin2 = 530.0; freqMax2 = 690.0;
-                detectionDuration = 150;
-                break;
-            default: // Medio
-                freqMin = 950.0;  freqMax = 1080.0;
-                freqMin2 = 560.0; freqMax2 = 660.0;
-                detectionDuration = 150;
-        }
-
-        switch (sensitivity) {
-            case 0: // Bassa — meno falsi positivi
-                volumeThreshold = 400.0; break;
-            case 2: // Alta — cattura suoni deboli
-                volumeThreshold = 100.0; break;
-            default: // Media
-                volumeThreshold = 200.0;
-        }
+    // Distanza → range di frequenza
+    switch (distance) {
+        case 0: // Vicino — range stretto
+            freqMin = 995.0; freqMax = 1045.0;
+            detectionDuration = 60;
+            break;
+        case 2: // Lontano — range largo per riverbero
+            freqMin = 940.0; freqMax = 1110.0;
+            detectionDuration = 100;
+            break;
+        default: // Medio
+            freqMin = 970.0; freqMax = 1070.0;
+            detectionDuration = 80;
     }
+    // Sensibilità → soglia volume e soglia energia relativa
+    switch (sensitivity) {
+        case 0: // Bassa — meno falsi positivi
+            volumeThreshold = 1500.0;
+            relativeEnergyThreshold = 0.35;
+            break;
+        case 2: // Alta — cattura suoni deboli
+            volumeThreshold = 150.0;
+            relativeEnergyThreshold = 0.12;
+            break;
+        default: // Media
+            volumeThreshold = 250.0;
+            relativeEnergyThreshold = 0.22;
+    }
+}
 
     private void showSirenCalibrationDialog() {
         boolean isDark    = themeManager.getCurrentTheme() == ThemeManager.THEME_DARK;
@@ -304,7 +303,7 @@ private void applySirenSettings(int distance, int sensitivity) {
 
         // Nota informativa
         android.widget.TextView note = new android.widget.TextView(this);
-        note.setText("\nℹ️ Frequenza sirena: 900Hz\nDurata minima rilevamento: adattiva");
+        note.setText("\nℹ️ Frequenza sirena rilevata: ~1019Hz\nRilevamento: energia in banda / soglia relativa");
         note.setTextColor(textSecondary);
         note.setTextSize(11);
         layout.addView(note);
@@ -388,14 +387,9 @@ private void applySirenSettings(int distance, int sensitivity) {
                     continue;
                 }
 
-                // Analisi FFT per frequenza dominante
-                double dominantFreq = getDominantFrequency(buffer, read);
-
-                // Verifica se la frequenza è nella banda della sirena
-                // (frequenza principale OPPURE frequenza secondaria)
-                boolean isMainFreq  = dominantFreq >= freqMin && dominantFreq <= freqMax;
-                boolean isSecondFreq = dominantFreq >= freqMin2 && dominantFreq <= freqMax2;
-                boolean isInSirenRange = isMainFreq || isSecondFreq;
+                // SOSTITUISCI con:
+                // Rilevamento sirena tramite energia relativa nella banda
+                boolean isInSirenRange = hasSirenFrequency(buffer, read);
 
                 if (isInSirenRange) {
                     consecutiveHits++;
@@ -403,7 +397,7 @@ private void applySirenSettings(int distance, int sensitivity) {
                         sirenStartTime = System.currentTimeMillis();  // ← RIGA ATTUALE
                     }
                     // Richiede almeno 3 rilevamenti consecutivi E durata minima
-                    if (consecutiveHits >= 3 &&
+                    if (consecutiveHits >= 2 &&
                             System.currentTimeMillis() - sirenStartTime >= detectionDuration) {
                         final long sirenStart = sirenStartTime;
                         runOnUiThread(() -> {
@@ -460,34 +454,34 @@ private void applySirenSettings(int distance, int sensitivity) {
     }
 
     /** FFT semplificata per trovare la frequenza dominante */
-    private double getDominantFrequency(short[] buffer, int length) {
-        // Usa un campione ridotto per efficienza
-        int n = Math.min(length, 2048);
+    /** Verifica se c'è energia significativa nella banda della sirena (~1019 Hz) */
+    private boolean hasSirenFrequency(short[] buffer, int length) {
+        int n = 4096;
         double[] real = new double[n];
         double[] imag = new double[n];
-
-        // Applica finestra di Hanning
-        for (int i = 0; i < n; i++) {
-            double window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (n - 1)));
+    
+        int useLen = Math.min(length, n);
+        for (int i = 0; i < useLen; i++) {
+            double window = 0.5 * (1.0 - Math.cos(2.0 * Math.PI * i / (useLen - 1)));
             real[i] = buffer[i] * window;
             imag[i] = 0;
         }
-
-        // FFT iterativa (Cooley-Tukey)
+    
         fft(real, imag, n);
-
-        // Trova il bin con ampiezza massima (escludi DC)
-        int maxBin = 1;
-        double maxAmp = 0;
+    
+        double sirenEnergy = 0;
+        double totalEnergy = 0;
         for (int i = 1; i < n / 2; i++) {
-            double amp = Math.sqrt(real[i] * real[i] + imag[i] * imag[i]);
-            if (amp > maxAmp) {
-                maxAmp = amp;
-                maxBin = i;
+            double freq = (double) i * SAMPLE_RATE / n;
+            double amp2 = real[i] * real[i] + imag[i] * imag[i];
+            totalEnergy += amp2;
+            if (freq >= freqMin && freq <= freqMax) {
+                sirenEnergy += amp2;
             }
         }
-
-        return (double) maxBin * SAMPLE_RATE / n;
+    
+        if (totalEnergy < 1e-10) return false;
+        return (sirenEnergy / totalEnergy) >= relativeEnergyThreshold;
     }
 
     /** FFT di Cooley-Tukey — opera su potenze di 2 */
