@@ -93,9 +93,9 @@ public class SwimmerAnimView extends View {
             float t = (float) a.getAnimatedValue();
             // Muove da 0.1 a 0.9 in base alla direzione corrente
             if (direction > 0) {
-                swimX = 0.1f + t * 0.8f;
+                swimX = 0.1f + t * 0.6f;
             } else {
-                swimX = 0.9f - t * 0.8f;
+                swimX = 0.7f - t * 0.6f;
             }
             invalidate();
         });
