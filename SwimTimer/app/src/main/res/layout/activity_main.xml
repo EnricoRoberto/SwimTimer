@@ -56,12 +56,35 @@
         android:paddingBottom="16dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Swimmer animation strip -->
-        <com.swimtimer.app.SwimmerAnimView
-            android:id="@+id/swimmerView"
+    <!-- Swimmer animation strip + contatore vasche -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="4dp">
+
+            <com.swimtimer.app.SwimmerAnimView
+                android:id="@+id/swimmerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <TextView
+                android:id="@+id/tvLapCounter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginEnd="10dp"
+                android:text="0/4"
+                android:textSize="26sp"
+                android:fontFamily="monospace"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:shadowColor="#CC000000"
+                android:shadowDx="1"
+                android:shadowDy="1"
+                android:shadowRadius="6"
+                android:visibility="gone"/>
+
+        </FrameLayout>
 
         <!-- Timer card with translucent pool-glass effect -->
         <androidx.cardview.widget.CardView
