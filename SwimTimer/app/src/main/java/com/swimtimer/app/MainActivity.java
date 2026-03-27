@@ -400,7 +400,7 @@ private void applySirenSettings(int distance, int sensitivity) {
                 if (isInSirenRange) {
                     consecutiveHits++;
                     if (sirenStartTime == -1) {
-                        sirenStartTime = System.currentTimeMillis();
+                        sirenStartTime = System.currentTimeMillis();  // ← RIGA ATTUALE
                     }
                     // Richiede almeno 3 rilevamenti consecutivi E durata minima
                     if (consecutiveHits >= 3 &&
@@ -447,8 +447,8 @@ private void applySirenSettings(int distance, int sensitivity) {
         vibrate();
         // Calcola il ritardo di rilevamento e compensalo
         long detectionDelay = System.currentTimeMillis() - sirenDetectedAt;
-        Toast.makeText(this, "🚨 Sirena rilevata! (compensato +"
-                + detectionDelay + "ms)", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "🚨 Sirena rilevata! (Δ +" + detectionDelay + "ms)",
+        Toast.LENGTH_SHORT).show();
         // Fa partire il cronometro da sirenDetectedAt invece che da ora
         startTime = sirenDetectedAt;
         isRunning = true;
