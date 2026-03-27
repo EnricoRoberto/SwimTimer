@@ -74,7 +74,22 @@
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:layout_marginBottom="12dp"/>
+        <TextView
+            android:id="@+id/labelPoolLength"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lunghezza vasca"
+            android:textSize="13sp"
+            android:layout_marginBottom="4dp"/>
 
+        <Spinner
+            android:id="@+id/spinnerPoolLength"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/spinner_bg"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginBottom="12dp"/>
         <TextView
             android:id="@+id/labelStyle"
             android:layout_width="match_parent"
