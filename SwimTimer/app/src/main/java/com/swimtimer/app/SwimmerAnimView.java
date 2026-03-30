@@ -208,7 +208,6 @@ public class SwimmerAnimView extends View {
     }
 
     @Override
-    @Override
 protected void onDraw(Canvas canvas) {
     super.onDraw(canvas);
     int w = getWidth();
