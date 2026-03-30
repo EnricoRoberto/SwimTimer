@@ -451,7 +451,7 @@ private void applySirenSettings(int distance, int sensitivity) {
         startTime = sirenDetectedAt;
         isRunning = true;
         handler.post(timerRunnable);
-        binding.swimmerView.setRunning(true);
+        binding.swimmerView.startDive();
         binding.waveView.setRunning(true);
         updateUI();
         updateSetupBar();
@@ -565,7 +565,7 @@ private void applySirenSettings(int distance, int sensitivity) {
             startTime = System.currentTimeMillis();
             isRunning = true;
             handler.post(timerRunnable);
-            binding.swimmerView.setRunning(true);
+            binding.swimmerView.startDive();
             binding.waveView.setRunning(true);
         }
         updateUI();
