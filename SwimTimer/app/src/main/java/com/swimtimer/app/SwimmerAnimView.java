@@ -145,25 +145,25 @@ public class SwimmerAnimView extends View {
         if (tumbleAnimator != null) tumbleAnimator.cancel();
     
         // Posizione iniziale: sinistra, rivolto a destra (come quando è fermo)
-        swimX     = 0.12f;
-        direction = 1f;
-        flipScale = 1f;
-        isDiving  = true;
-        diveAngle = -32f;
-        kickAngle = 0f;
-        armAngle  = 0f;
+        swimX       = 0.12f;
+        direction   = 1f;
+        flipScale   = 1f;
+        isDiving    = true;
+        diveAngle   = -32f;
+        kickAngle   = 0f;
+        armAngle    = 0f;
         tumbleAngle = 0f;
         isTumbling  = false;
         invalidate();
     
-        // Volo di tuffo: traversa la vasca verso destra in 750ms
+        // Tuffo: da sinistra (0.12) fino a metà schermo (0.50) in 600ms
         diveAnimator = ValueAnimator.ofFloat(0f, 1f);
-        diveAnimator.setDuration(750);
+        diveAnimator.setDuration(600);
         diveAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
         diveAnimator.addUpdateListener(a -> {
             float t = (float) a.getAnimatedValue();
-            swimX     = 0.12f + t * 0.76f;   // da sinistra (0.12) a destra (0.88)
-            diveAngle = -32f * (1f - t);       // si raddrizza progressivamente
+            swimX     = 0.12f + t * 0.38f;  // da 0.12 a 0.50
+            diveAngle = -32f * (1f - t);     // si raddrizza progressivamente
             invalidate();
         });
         diveAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
@@ -171,13 +171,14 @@ public class SwimmerAnimView extends View {
             public void onAnimationEnd(android.animation.Animator animation) {
                 isDiving  = false;
                 diveAngle = 0f;
-                swimX     = 0.88f;
-                // Arrivato a destra: gira e nuota verso sinistra
-                direction = -1f;
-                flipScale = -1f;
+                swimX     = 0.50f;
+                direction = 1f;
+                flipScale = 1f;
+                // Riprende il nuoto da metà schermo verso destra
+                // swimX = 0.1 + t * 0.6  →  0.5 = 0.1 + t*0.6  →  t = 0.667
                 kickAnimator.start();
                 armAnimator.start();
-                swimAnimator.setCurrentFraction(0f);
+                swimAnimator.setCurrentFraction(0.667f);
                 swimAnimator.start();
             }
         });
