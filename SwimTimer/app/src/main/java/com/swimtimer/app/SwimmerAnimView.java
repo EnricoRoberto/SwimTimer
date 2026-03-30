@@ -28,6 +28,9 @@ public class SwimmerAnimView extends View {
     // Angolo capriola (0 = normale, 180 = capovolto durante flip)
     private float tumbleAngle = 0f;
     private boolean isTumbling = false;
+    private float diveAngle  = 0f;
+    private boolean isDiving = false;
+    private ValueAnimator diveAnimator;
 
     private ValueAnimator kickAnimator, armAnimator, swimAnimator;
     private ValueAnimator tumbleAnimator;
@@ -135,6 +138,54 @@ public class SwimmerAnimView extends View {
         tumbleAnimator.start();
     }
 
+    /** Tuffo dai blocchi di partenza, poi transizione al nuoto normale */
+    public void startDive() {
+        kickAnimator.cancel();
+        armAnimator.cancel();
+        swimAnimator.cancel();
+        if (tumbleAnimator != null) tumbleAnimator.cancel();
+    
+        // Posizione iniziale: destra, rivolto a sinistra, corpo inclinato in avanti
+        swimX     = 0.88f;
+        direction = -1f;
+        flipScale = -1f;
+        isDiving  = true;
+        diveAngle = -32f;
+        kickAngle = 0f;
+        armAngle  = 0f;
+        tumbleAngle = 0f;
+        isTumbling  = false;
+        invalidate();
+    
+        // Volo di tuffo: attraversa la vasca in 750ms
+        diveAnimator = ValueAnimator.ofFloat(0f, 1f);
+        diveAnimator.setDuration(750);
+        diveAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+        diveAnimator.addUpdateListener(a -> {
+            float t = (float) a.getAnimatedValue();
+            swimX     = 0.88f - t * 0.76f;       // da destra (0.88) a sinistra (0.12)
+            diveAngle = -32f * (1f - t);           // si raddrizza progressivamente
+            invalidate();
+        });
+        diveAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                isDiving  = false;
+                diveAngle = 0f;
+                swimX     = 0.12f;
+                // Arrivato a sinistra: gira e nuota verso destra
+                direction = 1f;
+                flipScale = 1f;
+                kickAnimator.start();
+                armAnimator.start();
+                swimAnimator.setCurrentFraction(0f);
+                swimAnimator.start();
+            }
+        });
+        diveAnimator.start();
+    }
+
+    
     public void setRunning(boolean running) {
         if (running) {
             if (!kickAnimator.isRunning()) kickAnimator.start();
@@ -157,51 +208,64 @@ public class SwimmerAnimView extends View {
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-        int w = getWidth();
-        int h = getHeight();
-        if (w == 0 || h == 0) return;
+    @Override
+protected void onDraw(Canvas canvas) {
+    super.onDraw(canvas);
+    int w = getWidth();
+    int h = getHeight();
+    if (w == 0 || h == 0) return;
 
-        float cx = w * swimX;
-        float cy = h / 2f;
-        float scale = Math.min(w, h * 2.5f) / 160f;
+    float cx = w * swimX;
+    float cy = h / 2f;
+    float scale = Math.min(w, h * 2.5f) / 160f;
 
-        canvas.save();
-        canvas.translate(cx, cy);
+    canvas.save();
+    canvas.translate(cx, cy);
 
-        // Flip orizzontale per direzione + capriola
-        canvas.scale(flipScale * scale, scale);
-        canvas.rotate(tumbleAngle, 0, 0);
+    // Flip orizzontale per direzione + capriola + angolo tuffo
+    canvas.scale(flipScale * scale, scale);
+    canvas.rotate(tumbleAngle + diveAngle, 0, 0);
 
-        // === CORPO ===
-        suitPaint.setColor(Color.parseColor("#1565C0"));
-        canvas.drawRoundRect(new RectF(-42, -10, 20, 10), 10, 10, suitPaint);
+    // === CORPO ===
+    suitPaint.setColor(Color.parseColor("#1565C0"));
+    canvas.drawRoundRect(new RectF(-42, -10, 20, 10), 10, 10, suitPaint);
 
-        // === TESTA ===
-        bodyPaint.setColor(Color.parseColor("#F5D5B0"));
-        canvas.drawCircle(30, -2, 14, bodyPaint);
+    // === TESTA ===
+    bodyPaint.setColor(Color.parseColor("#F5D5B0"));
+    canvas.drawCircle(30, -2, 14, bodyPaint);
 
-        // === CUFFIA ===
-        canvas.drawArc(new RectF(16, -16, 44, 10), 180, 180, true, capPaint);
+    // === CUFFIA ===
+    canvas.drawArc(new RectF(16, -16, 44, 10), 180, 180, true, capPaint);
 
-        // === OCCHIALINI ===
-        gogglePaint.setAlpha(200);
-        canvas.drawCircle(38, 2, 4, gogglePaint);
-        canvas.drawLine(34, 2, 30, 0, linePaint);
+    // === OCCHIALINI ===
+    gogglePaint.setAlpha(200);
+    canvas.drawCircle(38, 2, 4, gogglePaint);
+    canvas.drawLine(34, 2, 30, 0, linePaint);
 
+    armPaint.setColor(Color.parseColor("#F5D5B0"));
+
+    if (isDiving) {
+        // === BRACCIA PROTESE IN AVANTI (posizione di tuffo) ===
+        armPaint.setStrokeWidth(7f);
+        canvas.drawLine(18, -7, 72, -7, armPaint);
+        canvas.drawLine(18, -1, 72, -1, armPaint);
+
+        // === GAMBE UNITE E TESE ===
+        armPaint.setStrokeWidth(8f);
+        canvas.drawLine(-42, -3, -75, -3, armPaint);
+        canvas.drawLine(-42,  3, -75,  3, armPaint);
+    } else {
         // === BRACCIO DESTRO ===
         float rad = (float) Math.toRadians(armAngle);
-        float bx = (float)(18 * Math.cos(rad));
-        float by = (float)(8 * Math.sin(rad));
-        armPaint.setColor(Color.parseColor("#F5D5B0"));
+        float bx  = (float)(18 * Math.cos(rad));
+        float by  = (float)(8  * Math.sin(rad));
         armPaint.setStrokeWidth(7f);
         canvas.drawLine(18, -4, 18 + bx * 3, -4 + by, armPaint);
 
         // === BRACCIO SINISTRO ===
         float rad2 = (float) Math.toRadians(armAngle + 180);
-        float bx2 = (float)(18 * Math.cos(rad2));
-        float by2 = (float)(8 * Math.sin(rad2));
+        float bx2  = (float)(18 * Math.cos(rad2));
+        float by2  = (float)(8  * Math.sin(rad2));
         canvas.drawLine(0, -4, bx2, -4 + by2, armPaint);
 
         // === GAMBE ===
@@ -214,9 +278,10 @@ public class SwimmerAnimView extends View {
         canvas.rotate(-kickAngle, -42, 0);
         canvas.drawLine(-42, 4, -72, 12, armPaint);
         canvas.restore();
-
-        canvas.restore();
     }
+
+    canvas.restore();
+}
 
     @Override
     protected void onDetachedFromWindow() {
@@ -225,5 +290,6 @@ public class SwimmerAnimView extends View {
         if (armAnimator != null) armAnimator.cancel();
         if (swimAnimator != null) swimAnimator.cancel();
         if (tumbleAnimator != null) tumbleAnimator.cancel();
+        if (diveAnimator   != null) diveAnimator.cancel();
     }
 }
