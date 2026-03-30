@@ -138,8 +138,7 @@ public class SwimmerAnimView extends View {
         tumbleAnimator.start();
     }
 
-        /** Tuffo dai blocchi di partenza, poi transizione al nuoto normale */
-        public void startDive() {
+    public void startDive() {
         kickAnimator.cancel();
         armAnimator.cancel();
         swimAnimator.cancel();
@@ -184,7 +183,6 @@ public class SwimmerAnimView extends View {
         });
         diveAnimator.start();
     }
-
     
     public void setRunning(boolean running) {
         if (running) {
