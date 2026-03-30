@@ -546,6 +546,20 @@ private void applySirenSettings(int distance, int sensitivity) {
             handler.removeCallbacks(timerRunnable);
             binding.swimmerView.setRunning(false);
             binding.waveView.setRunning(false);
+            // Registra automaticamente l'ultima vasca se ce n'erano già altre
+            if (!laps.isEmpty()) {
+                long lapTime = elapsedTime - lastLapTime;
+                if (lapTime > 0) {
+                    laps.add(0, lapTime);
+                    lastLapTime = elapsedTime;
+                    lapAdapter.notifyItemInserted(0);
+                    binding.rvLaps.scrollToPosition(0);
+                    if (setupDone) updateRecordBadge();
+                    if (totalLaps > 0) {
+                        currentLapCount = Math.min(currentLapCount + 1, totalLaps);
+                    }
+                }
+            }
         } else {
             if (isListening) stopListening();
             startTime = System.currentTimeMillis();
