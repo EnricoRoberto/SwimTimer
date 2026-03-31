@@ -32,7 +32,7 @@ jobs:
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
 
       - name: Compila APK debug
-        run: ./gradlew assembleDebug
+        run: ../gradlew assembleDebug
 
       - name: Salva APK
         uses: actions/upload-artifact@v4
