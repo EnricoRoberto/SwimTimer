@@ -51,7 +51,7 @@ jobs:
              app/build/outputs/apk/debug/SwimTimer-v${{ steps.version.outputs.name }}.apk
 
       - name: Salva APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: SwimTimer-v${{ github.run_number }}
-          path: SwimTimer/app/build/outputs/apk/debug/SwimTimer-v${{ github.run_number }}.apk
+      uses: actions/upload-artifact@v4
+      with:
+        name: SwimTimer-v${{ steps.version.outputs.name }}
+        path: SwimTimer/app/build/outputs/apk/debug/SwimTimer-v${{ steps.version.outputs.name }}.apk
