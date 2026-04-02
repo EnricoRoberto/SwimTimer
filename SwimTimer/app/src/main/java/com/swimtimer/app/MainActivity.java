@@ -41,6 +41,7 @@ import java.util.List;
 import java.util.Locale;
 import android.os.PowerManager;
 
+
 public class MainActivity extends AppCompatActivity {
 
     private PowerManager.WakeLock wakeLock;
