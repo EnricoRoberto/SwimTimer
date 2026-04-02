@@ -29,6 +29,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
+          cache-disabled: true
 
       - name: Crea local.properties
         run: echo "sdk.dir=$ANDROID_HOME" > local.properties
@@ -36,22 +37,19 @@ jobs:
       - name: Compila APK debug
         run: gradle assembleDebug
 
-      # ← NUOVO: legge versionName da build.gradle
       - name: Leggi versionName
         id: version
         run: |
-          VERSION=$(grep versionName app/build.gradle | \
-                    grep -oP '"\K[^"]+')
+          VERSION=$(grep '^\s*versionName\s' app/build.gradle | grep -oP '"\K[^"]+')
           echo "name=$VERSION" >> $GITHUB_OUTPUT
 
-      # ← NUOVO: rinomina il file APK
       - name: Rinomina APK
         run: |
           mv app/build/outputs/apk/debug/app-debug.apk \
              app/build/outputs/apk/debug/SwimTimer-v${{ steps.version.outputs.name }}.apk
 
       - name: Salva APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: SwimTimer-v${{ steps.version.outputs.name }}
-        path: SwimTimer/app/build/outputs/apk/debug/SwimTimer-v${{ steps.version.outputs.name }}.apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: SwimTimer-v${{ steps.version.outputs.name }}
+          path: SwimTimer/app/build/outputs/apk/debug/SwimTimer-v${{ steps.version.outputs.name }}.apk
