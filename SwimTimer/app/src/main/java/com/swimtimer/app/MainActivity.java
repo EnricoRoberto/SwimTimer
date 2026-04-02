@@ -42,6 +42,7 @@ import java.util.Locale;
 
 public class MainActivity extends AppCompatActivity {
 
+    private PowerManager.WakeLock wakeLock;
     private ActivityMainBinding binding;
     private final Handler handler = new Handler();
     private long startTime = 0L, elapsedTime = 0L, lastLapTime = 0L;
@@ -440,6 +441,20 @@ private void applySirenSettings(int distance, int sensitivity) {
         updateAutoStartButton();
     }
 
+    private void acquireWakeLock() {
+    if (wakeLock == null) {
+        PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
+        wakeLock = pm.newWakeLock(
+                PowerManager.SCREEN_DIM_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                "SwimTimer:TimerWakeLock");
+    }
+    if (!wakeLock.isHeld()) wakeLock.acquire();
+    }
+
+    private void releaseWakeLock() {
+        if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
+    }
+
     private void startTimerFromSiren(long sirenDetectedAt) {
         if (isRunning) return;
         vibrate();
@@ -560,6 +575,7 @@ private void applySirenSettings(int distance, int sensitivity) {
                     }
                 }
             }
+            releaseWakeLock();
         } else {
             if (isListening) stopListening();
             startTime = System.currentTimeMillis();
@@ -567,6 +583,7 @@ private void applySirenSettings(int distance, int sensitivity) {
             handler.post(timerRunnable);
             binding.swimmerView.startDive();
             binding.waveView.setRunning(true);
+            acquireWakeLock();
         }
         updateUI();
         updateSetupBar();
