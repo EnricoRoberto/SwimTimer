@@ -1037,10 +1037,12 @@ private void applySirenSettings(int distance, int sensitivity) {
     @Override public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_history) {
-            startActivity(new Intent(this, HistoryActivity.class)); return true;
-        } else if (id == R.id.action_theme) {
-            showThemeDialog(); return true;
-        }
+        startActivity(new Intent(this, HistoryActivity.class)); return true;
+    } else if (id == R.id.action_theme) {
+        showThemeDialog(); return true;
+    } else if (id == R.id.action_changelog) {
+        startActivity(new Intent(this, ChangelogActivity.class)); return true;
+    }
         return super.onOptionsItemSelected(item);
     }
 
