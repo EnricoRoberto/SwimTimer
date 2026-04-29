@@ -18,6 +18,7 @@
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">#BBE0F0</item>
         <item name="actionButtonStyle">@style/MyActionButton</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 
     <style name="Theme.SwimTimer.Dark" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -31,6 +32,7 @@
         <item name="android:windowBackground">@color/dark_pool</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">#90CAF9</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
 
     <style name="Theme.SwimTimer.Multi" parent="Theme.MaterialComponents.DayNight.NoActionBar">
@@ -44,6 +46,7 @@
         <item name="android:windowBackground">@color/mc_pool</item>
         <item name="android:textColorPrimary">@android:color/white</item>
         <item name="android:textColorSecondary">#CE93D8</item>
+        <item name="android:windowFullscreen">true</item>
     </style>
     <style name="MyActionButton" parent="Widget.AppCompat.ActionButton">
         <item name="android:minWidth">56dp</item>
