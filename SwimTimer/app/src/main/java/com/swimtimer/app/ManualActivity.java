@@ -3,6 +3,7 @@ package com.swimtimer.app;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import java.io.File;
@@ -31,43 +32,28 @@ public class ManualActivity extends AppCompatActivity {
         webView.getSettings().setUseWideViewPort(true);
         webView.getSettings().setLoadWithOverviewMode(true);
         webView.getSettings().setAllowFileAccess(true);
+        webView.getSettings().setAllowContentAccess(true);
+        webView.setWebViewClient(new WebViewClient());
 
         try {
-            // Copia il PDF dagli assets nella cache, poi lo apre
+            // Copia il PDF dagli assets nella cache interna
             File outFile = new File(getCacheDir(), "SwimTimer_Manuale.pdf");
-            if (!outFile.exists()) {
-                InputStream in = getAssets().open("SwimTimer_Manuale.pdf");
-                OutputStream out = new FileOutputStream(outFile);
-                byte[] buf = new byte[4096];
-                int len;
-                while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-                in.close();
-                out.close();
-            }
-            // Apre il PDF tramite Google Docs viewer (richiede internet)
-            // oppure con viewer locale se disponibile
-            android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
-                    this, "com.swimtimer.app.fileprovider", outFile);
+            InputStream in = getAssets().open("SwimTimer_Manuale.pdf");
+            OutputStream out = new FileOutputStream(outFile);
+            byte[] buf = new byte[4096];
+            int len;
+            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
+            in.close();
+            out.close();
 
-            android.content.Intent intent = new android.content.Intent(
-                    android.content.Intent.ACTION_VIEW);
-            intent.setDataAndType(uri, "application/pdf");
-            intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-            if (intent.resolveActivity(getPackageManager()) != null) {
-                startActivity(intent);
-                finish(); // chiude ManualActivity, il PDF apre nell'app esterna
-            } else {
-                // Fallback: WebView con Google Docs
-                String url = "https://docs.google.com/gviewer?embedded=true&url="
-                        + outFile.toURI().toString();
-                webView.loadUrl(url);
-            }
+            // Carica direttamente il file locale nella WebView
+            webView.loadUrl("file://" + outFile.getAbsolutePath());
 
         } catch (Exception e) {
-            WebView wv = findViewById(R.id.webView);
-            wv.loadData("<h2>Errore caricamento manuale</h2><p>" 
-                + e.getMessage() + "</p>", "text/html", "utf-8");
+            webView.loadData(
+                "<h2 style='font-family:sans-serif'>Errore caricamento manuale</h2><p>"
+                + e.getMessage() + "</p>",
+                "text/html", "utf-8");
         }
     }
 
