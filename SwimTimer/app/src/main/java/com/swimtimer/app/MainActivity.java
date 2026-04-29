@@ -158,58 +158,39 @@ public class MainActivity extends AppCompatActivity {
                 .show());
     });
     try {
-        themeManager = ThemeManager.getInstance(this);
-        loadSirenSettings();
-        super.onCreate(savedInstanceState);   // ← prima super
-
-        // Fullscreen immersivo: copre status bar
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            getWindow().setDecorFitsSystemWindows(false);
-            android.view.WindowInsetsController controller =
-                    getWindow().getInsetsController();
-            if (controller != null) {
-                controller.hide(android.view.WindowInsets.Type.statusBars());
-                controller.setSystemBarsBehavior(
-                        android.view.WindowInsetsController
-                                .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-            }
-        } else {
-            getWindow().getDecorView().setSystemUiVisibility(
-                    android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        }
-        themeManager.applyTheme(this);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());  // ← una sola volta
-        setContentView(binding.getRoot());
-        setSupportActionBar(binding.toolbar);
-        binding.waveView.setTheme(themeManager.getCurrentTheme());
-        vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        lapAdapter = new LapAdapter(laps);
-        binding.rvLaps.setLayoutManager(new LinearLayoutManager(this));
-        binding.rvLaps.setAdapter(lapAdapter);
-        binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
-        binding.btnLap.setOnClickListener(v -> {
-            if (isRunning) { vibrate(); recordLap(); }
-        });
-        binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
-        binding.btnSetup.setOnClickListener(v -> showSetupDialog());
-        binding.btnAutoStart.setOnClickListener(v -> { vibrate(); toggleListening(); });
-        binding.btnAutoStart.setOnLongClickListener(v -> {
-            vibrate();
-            showSirenCalibrationDialog();
-            return true;
-        });
-        handleImportIntent(getIntent());
-        updateUI();
-        updateSetupBar();
-    } catch (Exception e) {
-        new AlertDialog.Builder(this)
-                .setTitle("Errore onCreate")
-                .setMessage(e.toString())
-                .setPositiveButton("OK", null).show();
-    }
+    themeManager = ThemeManager.getInstance(this);
+    loadSirenSettings();
+    themeManager.applyTheme(this);
+    super.onCreate(savedInstanceState);
+    binding = ActivityMainBinding.inflate(getLayoutInflater());
+    setContentView(binding.getRoot());
+    setSupportActionBar(binding.toolbar);
+    binding.waveView.setTheme(themeManager.getCurrentTheme());
+    vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+    lapAdapter = new LapAdapter(laps);
+    binding.rvLaps.setLayoutManager(new LinearLayoutManager(this));
+    binding.rvLaps.setAdapter(lapAdapter);
+    binding.btnStartStop.setOnClickListener(v -> { vibrate(); toggleTimer(); });
+    binding.btnLap.setOnClickListener(v -> {
+        if (isRunning) { vibrate(); recordLap(); }
+    });
+    binding.btnReset.setOnClickListener(v -> { vibrate(); onResetPressed(); });
+    binding.btnSetup.setOnClickListener(v -> showSetupDialog());
+    binding.btnAutoStart.setOnClickListener(v -> { vibrate(); toggleListening(); });
+    binding.btnAutoStart.setOnLongClickListener(v -> {
+        vibrate();
+        showSirenCalibrationDialog();
+        return true;
+    });
+    handleImportIntent(getIntent());
+    updateUI();
+    updateSetupBar();
+} catch (Exception e) {
+    new AlertDialog.Builder(this)
+            .setTitle("Errore onCreate")
+            .setMessage(e.toString())
+            .setPositiveButton("OK", null).show();
+}
 }
 
     // ── MICROFONO ──────────────────────────────────────────────────────────────
