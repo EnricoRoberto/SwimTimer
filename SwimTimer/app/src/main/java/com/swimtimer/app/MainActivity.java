@@ -157,6 +157,28 @@ public class MainActivity extends AppCompatActivity {
                     .setPositiveButton("OK", null)
                     .show());
         });
+
+                    // Fullscreen immersivo: copre status bar
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                getWindow().setDecorFitsSystemWindows(false);
+                android.view.WindowInsetsController controller =
+                        getWindow().getInsetsController();
+                if (controller != null) {
+                    controller.hide(android.view.WindowInsets.Type.statusBars());
+                    controller.setSystemBarsBehavior(
+                            android.view.WindowInsetsController
+                                    .BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                }
+            } else {
+                getWindow().getDecorView().setSystemUiVisibility(
+                        android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            }
+            
+            binding = ActivityMainBinding.inflate(getLayoutInflater());
+        
         try {
             themeManager = ThemeManager.getInstance(this);
             loadSirenSettings();
