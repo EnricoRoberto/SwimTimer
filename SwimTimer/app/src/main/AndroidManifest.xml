@@ -35,6 +35,8 @@
             android:screenOrientation="portrait" android:parentActivityName=".HistoryActivity"/>
          <activity android:name=".ChangelogActivity" android:exported="false"
             android:screenOrientation="portrait" android:parentActivityName=".MainActivity"/>
+        <activity android:name=".ManualActivity" android:exported="false"
+            android:screenOrientation="portrait" android:parentActivityName=".MainActivity"/>
         
     <provider
             android:name="androidx.core.content.FileProvider"
