@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwimTimer - Manuale d'uso</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    font-size: 15px;
+    color: #212121;
+    background: #ffffff;
+    padding: 0 0 40px 0;
+    line-height: 1.6;
+  }
+
+  /* COPERTINA */
+  .cover {
+    background: #0D3B5E;
+    padding: 48px 24px 36px;
+    text-align: center;
+  }
+  .cover h1 {
+    color: #ffffff;
+    font-size: 34px;
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  .cover .subtitle {
+    color: #BBE0F0;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .cover .version {
+    color: #FFD600;
+    font-size: 13px;
+  }
+  .cover .tagline {
+    color: #88BBDD;
+    font-size: 13px;
+    margin-top: 14px;
+    font-style: italic;
+  }
+
+  /* INDICE */
+  .toc {
+    background: #E3F2FD;
+    border-left: 4px solid #1976D2;
+    margin: 24px 16px;
+    padding: 16px 20px;
+    border-radius: 0 8px 8px 0;
+  }
+  .toc h2 {
+    font-size: 14px;
+    color: #0D3B5E;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .toc ol {
+    padding-left: 18px;
+  }
+  .toc li {
+    font-size: 13px;
+    color: #1565C0;
+    padding: 2px 0;
+  }
+  .toc a {
+    color: #1565C0;
+    text-decoration: none;
+  }
+
+  /* SEZIONI */
+  .section { margin: 0 16px 28px; }
+
+  .section-header {
+    background: #0D3B5E;
+    color: #ffffff;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 14px;
+  }
+
+  h3 {
+    color: #1976D2;
+    font-size: 14px;
+    margin: 14px 0 6px;
+    font-weight: bold;
+  }
+
+  p { margin-bottom: 10px; }
+
+  ul, ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+  }
+  li { margin-bottom: 4px; }
+
+  /* TABELLE */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px;
+    font-size: 13px;
+  }
+  thead tr {
+    background: #0D3B5E;
+    color: #ffffff;
+  }
+  thead th {
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: bold;
+  }
+  tbody tr:nth-child(odd)  { background: #ffffff; }
+  tbody tr:nth-child(even) { background: #E3F2FD; }
+  tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #BBDEFB;
+    vertical-align: top;
+  }
+
+  /* TIP BOX */
+  .tip {
+    background: #E3F2FD;
+    border: 1px solid #1976D2;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #0D47A1;
+    margin: 10px 0 14px;
+  }
+  .tip::before {
+    content: "Suggerimento: ";
+    font-weight: bold;
+  }
+
+  .note {
+    background: #FFF8E1;
+    border: 1px solid #FFB300;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #7B5E00;
+    margin: 10px 0 14px;
+  }
+  .note::before {
+    content: "Nota: ";
+    font-weight: bold;
+  }
+
+  /* FAQ */
+  .faq-q {
+    font-weight: bold;
+    color: #0D3B5E;
+    margin-top: 14px;
+    margin-bottom: 4px;
+  }
+  .faq-a {
+    color: #444;
+    margin-bottom: 10px;
+    padding-left: 12px;
+    border-left: 3px solid #BBDEFB;
+  }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    background: #0D3B5E;
+    color: #FFD600;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-right: 4px;
+  }
+
+  /* FOOTER */
+  .footer {
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    margin: 32px 16px 0;
+    border-top: 1px solid #E0E0E0;
+    padding-top: 16px;
+  }
+
+  .fast { color: #2E7D32; font-weight: bold; }
+  .slow { color: #C62828; font-weight: bold; }
+  code {
+    font-family: monospace;
+    background: #F5F5F5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- COPERTINA -->
+<div class="cover">
+  <h1>SwimTimer</h1>
+  <div class="subtitle">Manuale d'uso</div>
+  <div class="version">Versione 1.1 &mdash; Aprile 2025</div>
+  <div class="tagline">Cronometro professionale per il nuoto competitivo</div>
+</div>
+
+<!-- INDICE -->
+<div class="toc">
+  <h2>Indice</h2>
+  <ol>
+    <li><a href="#intro">Introduzione</a></li>
+    <li><a href="#main">Schermata principale</a></li>
+    <li><a href="#avvio">Avvio cronometro</a></li>
+    <li><a href="#salvataggio">Fine gara e salvataggio</a></li>
+    <li><a href="#record">Sistema record</a></li>
+    <li><a href="#cronologia">Cronologia sessioni</a></li>
+    <li><a href="#condivisione">Condivisione e importazione</a></li>
+    <li><a href="#temi">Temi grafici</a></li>
+    <li><a href="#permessi">Permessi richiesti</a></li>
+    <li><a href="#faq">Domande frequenti</a></li>
+  </ol>
+</div>
+
+<!-- 1. INTRODUZIONE -->
+<div class="section" id="intro">
+  <div class="section-header">1. Introduzione</div>
+  <p>SwimTimer &egrave; un cronometro progettato per il nuoto agonistico. Permette di misurare
+  i tempi di gara, registrare le singole vasche, salvare le sessioni con nome atleta e
+  specialit&agrave;, e confrontarle nel tempo per monitorare i progressi.</p>
+  <p><strong>Funzionalit&agrave; principali:</strong></p>
+  <ul>
+    <li>Cronometro con registrazione vasche in tempo reale</li>
+    <li>Avvio automatico tramite rilevamento sirena (microfono)</li>
+    <li>Salvataggio sessioni con atleta, specialit&agrave; e foto</li>
+    <li>Storico gare con confronto record</li>
+    <li>Condivisione e importazione sessioni tramite link</li>
+    <li>Tre temi grafici: Chiaro, Scuro, Multicolor</li>
+  </ul>
+</div>
+
+<!-- 2. SCHERMATA PRINCIPALE -->
+<div class="section" id="main">
+  <div class="section-header">2. Schermata principale</div>
+
+  <h3>2.1 Barra superiore (toolbar)</h3>
+  <p>In alto a destra si trova il menu (icona &#8942;) che d&agrave; accesso a:</p>
+  <ul>
+    <li><strong>Cronologia</strong> &mdash; storico sessioni salvate</li>
+    <li><strong>Tema</strong> &mdash; scelta tema grafico</li>
+    <li><strong>Novit&agrave;</strong> &mdash; changelog versioni</li>
+    <li><strong>Manuale d'uso</strong> &mdash; questo documento</li>
+  </ul>
+
+  <h3>2.2 Pulsante Setup (giallo)</h3>
+  <p>Prima di avviare la cronometrazione &egrave; possibile impostare nome atleta,
+  specialit&agrave; (es. <em>100m Stile Libero</em>) e numero di vasche previste.
+  Questo dato &egrave; necessario per il confronto automatico dei record.
+  Il pulsante &egrave; visibile solo a cronometro fermo.</p>
+
+  <h3>2.3 Display del tempo</h3>
+  <p>Il tempo totale &egrave; mostrato in grande al centro nel formato
+  <strong>MM:SS.cc</strong> (minuti, secondi, centesimi).
+  Sotto compare il tempo della vasca corrente.</p>
+
+  <h3>2.4 Pulsanti di controllo</h3>
+  <table>
+    <thead><tr><th>Pulsante</th><th>Stato</th><th>Azione</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Start</strong></td><td>Fermo</td><td>Avvia il cronometro</td></tr>
+      <tr><td><strong>Stop</strong></td><td>In corso</td><td>Ferma e registra l'ultima vasca</td></tr>
+      <tr><td><strong>Vasca</strong></td><td>In corso</td><td>Registra il tempo della vasca corrente</td></tr>
+      <tr><td><strong>Reset</strong></td><td>Fermo</td><td>Azzera tutto e mostra dialog salvataggio</td></tr>
+      <tr><td><strong>Microfono</strong></td><td>Fermo</td><td>Attiva/disattiva ascolto sirena</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2.5 Lista vasche</h3>
+  <p>Sotto i pulsanti compare la lista delle vasche registrate.
+  La vasca pi&ugrave; veloce &egrave; evidenziata in <span class="fast">verde</span>,
+  quella pi&ugrave; lenta in <span class="slow">rosso</span>.
+  Dopo lo stop, se &egrave; stato battuto un record, appare il badge
+  accanto alla vasca pi&ugrave; veloce.</p>
+</div>
+
+<!-- 3. AVVIO -->
+<div class="section" id="avvio">
+  <div class="section-header">3. Avvio cronometro</div>
+
+  <h3>3.1 Avvio manuale</h3>
+  <p>Premere <strong>Start</strong>. Il cronometro parte immediatamente e il nuotatore
+  animato inizia a muoversi. Durante la gara premere <strong>Vasca</strong> ad ogni
+  tocco di parete. Al termine premere <strong>Stop</strong>.</p>
+
+  <h3>3.2 Avvio automatico da sirena</h3>
+  <p>SwimTimer pu&ograve; rilevare il suono della sirena di partenza tramite il microfono
+  e avviare il cronometro automaticamente.</p>
+  <ol>
+    <li>Premere il pulsante <strong>Microfono</strong> (in basso a destra).</li>
+    <li>L'app entra in modalit&agrave; ascolto: il pulsante diventa rosso.</li>
+    <li>Quando viene rilevata la sirena, il cronometro parte automaticamente
+        e viene mostrato il ritardo di rilevamento in millisecondi.</li>
+    <li>Il tempo viene compensato: il cronometro parte dall'istante esatto
+        della sirena, non dal momento in cui l'app ha finito di analizzare l'audio.</li>
+  </ol>
+  <div class="tip">Se il rilevamento &egrave; impreciso, aprire il menu e selezionare
+  <strong>Calibrazione sirena</strong> per regolare la distanza dal dispositivo
+  e la sensibilit&agrave; del microfono. La frequenza rilevata &egrave; circa 1019&nbsp;Hz.</div>
+</div>
+
+<!-- 4. SALVATAGGIO -->
+<div class="section" id="salvataggio">
+  <div class="section-header">4. Fine gara e salvataggio</div>
+  <p>Alla pressione di <strong>Stop</strong> o <strong>Reset</strong> l'app propone
+  un dialog di salvataggio con le seguenti opzioni:</p>
+  <ul>
+    <li><strong>Nome atleta</strong> &mdash; campo testuale opzionale</li>
+    <li><strong>Distanza</strong> &mdash; 50m, 100m, 200m, 400m, 800m, 1500m</li>
+    <li><strong>Stile</strong> &mdash; Stile Libero, Dorso, Rana, Farfalla, Misto</li>
+    <li><strong>Foto</strong> &mdash; possibilit&agrave; di scattare una foto dall'app</li>
+  </ul>
+  <p>Pulsanti disponibili nel dialog:</p>
+  <ul>
+    <li><strong>Salva</strong> &mdash; salva la sessione e azzera il cronometro</li>
+    <li><strong>Scarta</strong> &mdash; azzera senza salvare</li>
+    <li><strong>Annulla</strong> &mdash; torna al cronometro con i dati ancora presenti</li>
+  </ul>
+</div>
+
+<!-- 5. RECORD -->
+<div class="section" id="record">
+  <div class="section-header">5. Sistema record</div>
+  <p>Se durante il setup &egrave; stata impostata la specialit&agrave;, al momento dello Stop
+  l'app confronta la vasca pi&ugrave; veloce della sessione corrente con le sessioni
+  precedenti della stessa specialit&agrave;.</p>
+  <table>
+    <thead><tr><th>Badge</th><th>Significato</th></tr></thead>
+    <tbody>
+      <tr><td>&#127945; Medaglia d'oro</td><td>Record assoluto: vasca pi&ugrave; veloce di sempre</td></tr>
+      <tr><td>&#128200; Grafico</td><td>Miglioramento rispetto all'ultima sessione</td></tr>
+      <tr><td>&#127945; &#128200; Entrambi</td><td>Record assoluto E miglioramento rispetto all'ultima</td></tr>
+    </tbody>
+  </table>
+  <div class="note">Il confronto avviene solo tra sessioni della stessa specialit&agrave;
+  (es. &ldquo;100m Stile Libero&rdquo;). Sessioni senza specialit&agrave; impostata
+  non vengono confrontate.</div>
+</div>
+
+<!-- 6. CRONOLOGIA -->
+<div class="section" id="cronologia">
+  <div class="section-header">6. Cronologia sessioni</div>
+  <p>Dal menu selezionare <strong>Cronologia</strong>. Vengono mostrate tutte le sessioni
+  salvate, dalla pi&ugrave; recente. La sessione con il miglior tempo totale per ogni
+  specialit&agrave; &egrave; evidenziata con il bordo dorato.</p>
+  <p><strong>Azioni disponibili:</strong></p>
+  <ul>
+    <li>Toccare una sessione per aprirne il dettaglio (vasche, foto, statistiche)</li>
+    <li>Tenere premuto su una sessione per eliminarla</li>
+    <li>Dal dettaglio: <strong>Condividi</strong> per generare un link</li>
+    <li>Dal dettaglio: <strong>Rinomina</strong> per modificare il nome</li>
+  </ul>
+</div>
+
+<!-- 7. CONDIVISIONE -->
+<div class="section" id="condivisione">
+  <div class="section-header">7. Condivisione e importazione</div>
+
+  <h3>7.1 Condivisione</h3>
+  <p>Dal dettaglio di una sessione, premere <strong>Condividi</strong>.
+  Viene generato un link nel formato <code>swimtimer://import?data=...</code>
+  che pu&ograve; essere inviato via WhatsApp, email o qualsiasi altra app.
+  Il destinatario, toccando il link su un dispositivo con SwimTimer installato,
+  vedr&agrave; un dialog di conferma importazione.</p>
+
+  <h3>7.2 Importazione</h3>
+  <p>Toccare il link ricevuto: l'app si apre e mostra un riepilogo della sessione
+  (nome, tempo totale, numero vasche). Premere <strong>Importa</strong> per salvarla
+  nella propria cronologia. La sessione importata viene contrassegnata con un badge apposito.</p>
+</div>
+
+<!-- 8. TEMI -->
+<div class="section" id="temi">
+  <div class="section-header">8. Temi grafici</div>
+  <p>Dal menu selezionare <strong>Tema</strong> per scegliere tra:</p>
+  <table>
+    <thead><tr><th>Tema</th><th>Descrizione</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Chiaro</strong></td><td>Sfondo blu piscina, testi bianchi (predefinito)</td></tr>
+      <tr><td><strong>Scuro</strong></td><td>Sfondo molto scuro, adatto ad ambienti con poca luce</td></tr>
+      <tr><td><strong>Multicolor</strong></td><td>Pulsanti colorati (verde/blu/rosso), sfondo scuro</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 9. PERMESSI -->
+<div class="section" id="permessi">
+  <div class="section-header">9. Permessi richiesti</div>
+  <table>
+    <thead><tr><th>Permesso</th><th>Motivo</th></tr></thead>
+    <tbody>
+      <tr><td>Microfono</td><td>Rilevamento automatico sirena di partenza</td></tr>
+      <tr><td>Camera</td><td>Scatto foto atleta durante il salvataggio sessione</td></tr>
+      <tr><td>Vibrazione</td><td>Feedback aptico ad ogni vasca registrata</td></tr>
+      <tr><td>Wake Lock</td><td>Mantenere lo schermo acceso durante la cronometrazione</td></tr>
+      <tr><td>Storage (API &le; 32)</td><td>Accesso alle foto su versioni Android precedenti</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- 10. FAQ -->
+<div class="section" id="faq">
+  <div class="section-header">10. Domande frequenti</div>
+
+  <div class="faq-q">Il cronometro si ferma quando spengo lo schermo?</div>
+  <div class="faq-a">No. Lo schermo rimane acceso automaticamente durante la cronometrazione
+  grazie al Wake Lock. Il timer continua comunque in background anche se lo schermo
+  viene spento manualmente.</div>
+
+  <div class="faq-q">La sirena non viene rilevata correttamente. Cosa faccio?</div>
+  <div class="faq-a">Apri il menu e seleziona <strong>Calibrazione sirena</strong>.
+  Imposta la distanza corretta (Vicino / Medio / Lontano) e la sensibilit&agrave;
+  del microfono. La frequenza rilevata &egrave; circa 1019&nbsp;Hz.</div>
+
+  <div class="faq-q">Posso usare l'app senza impostare nome atleta e specialit&agrave;?</div>
+  <div class="faq-a">S&igrave;. Il setup &egrave; opzionale. Senza specialit&agrave; il sistema
+  record non &egrave; disponibile, ma cronometro e salvataggio funzionano normalmente.</div>
+
+  <div class="faq-q">Come faccio a eliminare una sessione?</div>
+  <div class="faq-a">Vai in <strong>Cronologia</strong>, tieni premuto sulla sessione
+  da eliminare e conferma nel dialog.</div>
+
+  <div class="faq-q">Le sessioni vengono salvate nel cloud?</div>
+  <div class="faq-a">No. Tutti i dati sono salvati localmente sul dispositivo.
+  Per trasferirli usa la funzione <strong>Condividi</strong> dal dettaglio sessione.</div>
+
+  <div class="faq-q">Posso usare SwimTimer senza connessione internet?</div>
+  <div class="faq-a">S&igrave;, completamente. L'app non richiede internet per nessuna
+  funzionalit&agrave; principale. La connessione &egrave; necessaria solo se si vuole
+  inviare un link di condivisione tramite app di messaggistica.</div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  SwimTimer v1.1 &mdash; Manuale d'uso &mdash; Aprile 2025
+</div>
+
+</body>
+</html>
