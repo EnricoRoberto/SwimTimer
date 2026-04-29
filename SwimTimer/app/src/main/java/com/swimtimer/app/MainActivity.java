@@ -1042,6 +1042,8 @@ private void applySirenSettings(int distance, int sensitivity) {
         showThemeDialog(); return true;
     } else if (id == R.id.action_changelog) {
         startActivity(new Intent(this, ChangelogActivity.class)); return true;
+    } else if (id == R.id.action_manual) {
+        startActivity(new Intent(this, ManualActivity.class)); return true;
     }
         return super.onOptionsItemSelected(item);
     }
