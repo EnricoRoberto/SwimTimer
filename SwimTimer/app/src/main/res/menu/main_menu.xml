@@ -7,7 +7,11 @@
         android:title="Novità"
         android:icon="@drawable/ic_lap"
         app:showAsAction="never" />
-
+     <item
+        android:id="@+id/action_manual"
+        android:title="Manuale d'uso"
+        app:showAsAction="never" />
+    
     <item
         android:id="@+id/action_theme"
         android:title="@string/choose_theme"
