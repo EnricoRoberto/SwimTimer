@@ -36,24 +36,10 @@ public class ManualActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient());
 
         try {
-            // Copia il PDF dagli assets nella cache interna
-            File outFile = new File(getCacheDir(), "SwimTimer_Manuale.pdf");
-            InputStream in = getAssets().open("SwimTimer_Manuale.pdf");
-            OutputStream out = new FileOutputStream(outFile);
-            byte[] buf = new byte[4096];
-            int len;
-            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-            in.close();
-            out.close();
-
-            // Carica direttamente il file locale nella WebView
-            webView.loadUrl("file://" + outFile.getAbsolutePath());
-
+            webView.loadUrl("file:///android_asset/manual.html");
         } catch (Exception e) {
-            webView.loadData(
-                "<h2 style='font-family:sans-serif'>Errore caricamento manuale</h2><p>"
-                + e.getMessage() + "</p>",
-                "text/html", "utf-8");
+            webView.loadData("<h2>Errore</h2><p>" + e.getMessage() + "</p>",
+            "text/html", "utf-8");
         }
     }
 
