@@ -160,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
     try {
         themeManager = ThemeManager.getInstance(this);
         loadSirenSettings();
-        themeManager.applyTheme(this);
         super.onCreate(savedInstanceState);   // ← prima super
 
         // Fullscreen immersivo: copre status bar
@@ -181,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                     | android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
-
+        themeManager.applyTheme(this);
         binding = ActivityMainBinding.inflate(getLayoutInflater());  // ← una sola volta
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
